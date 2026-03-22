@@ -11,7 +11,7 @@ pub struct Localizer {
 
 impl Localizer {
     /// Creates a new `Localizer` with the given initial state and process noise matrix Q.
-    pub fn new(node_id: u8, initial_state: NodeState, process_noise: Matrix6x6) -> Localizer {
+    pub fn new(node_id: u8, initial_state: NodeState, process_noise: Matrix6x6) -> Self {
         todo!()
     }
 

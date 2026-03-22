@@ -10,7 +10,7 @@ pub struct Pose3D {
 
 impl Pose3D {
     /// Creates a new `Pose3D`.
-    pub fn new(position: Vector3, velocity: Vector3, orientation: Quaternion) -> Pose3D {
+    pub fn new(position: Vector3, velocity: Vector3, orientation: Quaternion) -> Self {
         todo!()
     }
 }
@@ -33,7 +33,7 @@ impl NodeState {
         pose: Pose3D,
         covariance: Matrix6x6,
         timestamp_us: u64,
-    ) -> NodeState {
+    ) -> Self {
         todo!()
     }
 }

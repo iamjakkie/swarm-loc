@@ -14,22 +14,22 @@ impl Vector3 {
     /// use swarm_loc::math::Vector3;
     /// let v = Vector3::new(1.0, 2.0, 3.0);
     /// ```
-    pub fn new(x: f64, y: f64, z: f64) -> Vector3 {
-        todo!()
+    pub fn new(x: f64, y: f64, z: f64) -> Self {
+
     }
 
     /// Returns `self + other`.
-    pub fn add(&self, other: &Vector3) -> Vector3 {
+    pub fn add(&self, other: &Vector3) -> Self {
         todo!()
     }
 
     /// Returns `self - other`.
-    pub fn sub(&self, other: &Vector3) -> Vector3 {
+    pub fn sub(&self, other: &Vector3) -> Self {
         todo!()
     }
 
     /// Returns each component multiplied by `s`.
-    pub fn scale(&self, s: f64) -> Vector3 {
+    pub fn scale(&self, s: f64) -> Self {
         todo!()
     }
 
@@ -54,7 +54,7 @@ pub struct Matrix3x3 {
 
 impl Matrix3x3 {
     /// Returns the 3×3 identity matrix.
-    pub fn identity() -> Matrix3x3 {
+    pub fn identity() -> Self {
         todo!()
     }
 
@@ -64,7 +64,7 @@ impl Matrix3x3 {
     }
 
     /// Returns the transpose of `self`.
-    pub fn transpose(&self) -> Matrix3x3 {
+    pub fn transpose(&self) -> Self {
         todo!()
     }
 }
@@ -82,27 +82,27 @@ pub struct Quaternion {
 
 impl Quaternion {
     /// Returns the identity quaternion `[1, 0, 0, 0]`.
-    pub fn identity() -> Quaternion {
+    pub fn identity() -> Self {
         todo!()
     }
 
     /// Returns a unit-length copy of `self`.
-    pub fn normalize(&self) -> Quaternion {
+    pub fn normalize(&self) -> Self {
         todo!()
     }
 
     /// Returns the conjugate `[w, -x, -y, -z]`.
-    pub fn conjugate(&self) -> Quaternion {
+    pub fn conjugate(&self) -> Self {
         todo!()
     }
 
     /// Returns the Hamilton product `self ⊗ other`.
-    pub fn multiply(&self, other: &Quaternion) -> Quaternion {
+    pub fn multiply(&self, other: &Quaternion) -> Self {
         todo!()
     }
 
     /// Constructs a quaternion from Euler angles in radians (intrinsic ZYX order).
-    pub fn from_euler(roll: f64, pitch: f64, yaw: f64) -> Quaternion {
+    pub fn from_euler(roll: f64, pitch: f64, yaw: f64) -> Self {
         todo!()
     }
 
@@ -118,7 +118,7 @@ impl Quaternion {
 
     /// Constructs a quaternion for a rotation of `angle` radians around `axis`.
     /// Returns identity if `axis` has near-zero norm.
-    pub fn from_axis_angle(axis: &Vector3, angle: f64) -> Quaternion {
+    pub fn from_axis_angle(axis: &Vector3, angle: f64) -> Self {
         todo!()
     }
 }
@@ -133,17 +133,17 @@ pub struct Matrix6x6 {
 
 impl Matrix6x6 {
     /// Returns the all-zeros matrix.
-    pub fn zeros() -> Matrix6x6 {
+    pub fn zeros() -> Self {
         todo!()
     }
 
     /// Returns the 6×6 identity matrix.
-    pub fn identity() -> Matrix6x6 {
+    pub fn identity() -> Self {
         todo!()
     }
 
     /// Constructs a diagonal matrix from `diag`.
-    pub fn from_diagonal(diag: &[f64; 6]) -> Matrix6x6 {
+    pub fn from_diagonal(diag: &[f64; 6]) -> Self {
         todo!()
     }
 
@@ -164,32 +164,32 @@ impl Matrix6x6 {
     }
 
     /// Returns `self + other`.
-    pub fn add(&self, other: &Matrix6x6) -> Matrix6x6 {
+    pub fn add(&self, other: &Matrix6x6) -> Self {
         todo!()
     }
 
     /// Returns `self - other`.
-    pub fn sub(&self, other: &Matrix6x6) -> Matrix6x6 {
+    pub fn sub(&self, other: &Matrix6x6) -> Self {
         todo!()
     }
 
     /// Returns each element multiplied by `s`.
-    pub fn scale(&self, s: f64) -> Matrix6x6 {
+    pub fn scale(&self, s: f64) -> Self {
         todo!()
     }
 
     /// Returns the transpose of `self`.
-    pub fn transpose(&self) -> Matrix6x6 {
+    pub fn transpose(&self) -> Self {
         todo!()
     }
 
     /// Returns `self * other` (matrix multiply).
-    pub fn mul(&self, other: &Matrix6x6) -> Matrix6x6 {
+    pub fn mul(&self, other: &Matrix6x6) -> Self {
         todo!()
     }
 
     /// Returns the inverse of `self`, or `None` if the determinant is < 1e-12.
-    pub fn inverse(&self) -> Option<Matrix6x6> {
+    pub fn inverse(&self) -> Option<Self> {
         todo!()
     }
 
