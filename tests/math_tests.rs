@@ -4,6 +4,8 @@ use swarm_loc::math::{Matrix3x3, Matrix6x6, Quaternion, Vector3};
 
 #[cfg(test)]
 mod vector3_tests {
+    use num_traits::Pow;
+
     use super::*;
 
     #[test]
@@ -15,6 +17,13 @@ mod vector3_tests {
         assert_eq!(sum.x, 5.0);
         assert_eq!(sum.y, 7.0);
         assert_eq!(sum.z, 9.0);
+
+        let v3 = Vector3::new(-4.0, -5.0, -6.0);
+
+        let sum = v2.add(&v3);
+        assert_eq!(sum.x, 0.0);
+        assert_eq!(sum.y, 0.0);
+        assert_eq!(sum.z, 0.0);
     }
     
 
@@ -27,6 +36,13 @@ mod vector3_tests {
         assert_eq!(diff.x, -3.0);
         assert_eq!(diff.y, -3.0);
         assert_eq!(diff.z, -3.0);
+
+        let v3 = Vector3::new(-4.0, -5.0, -6.0);
+
+        let diff = v2.sub(&v3);
+        assert_eq!(diff.x, 8.0);
+        assert_eq!(diff.y, 10.0);
+        assert_eq!(diff.z, 12.0);
     }
 
     #[test]
@@ -36,11 +52,35 @@ mod vector3_tests {
         assert_eq!(scaled.x, 2.0);
         assert_eq!(scaled.y, 4.0);
         assert_eq!(scaled.z, 6.0);
+
+        let scaled = v.scale(0.0);
+        assert_eq!(scaled.x, 0.0);
+        assert_eq!(scaled.y, 0.0);
+        assert_eq!(scaled.z, 0.0);
+
+        let scaled = v.scale(1.0);
+        assert_eq!(scaled.x, v.x);
+        assert_eq!(scaled.y, v.y);
+        assert_eq!(scaled.z, v.z);
+
+        let scaled = v.scale(-1.0);
+        assert_eq!(scaled.x, -v.x);
+        assert_eq!(scaled.y, -v.y);
+        assert_eq!(scaled.z, -v.z);
     }
 
     #[test]
     fn test_vector3_norm() {
         let v = Vector3::new(3.0, 4.0, 0.0);
+        assert_eq!(v.norm(), 5.0);
+
+        let zero = Vector3::new(0.0, 0.0, 0.0);
+        assert_eq!(zero.norm(), 0.0);
+
+        let unit = Vector3::new(1.0, 0.0, 0.0);
+        assert_eq!(unit.norm(), 1.0);
+
+        let neg = Vector3::new(-3.0, -4.0, 0.0);
         assert_eq!(v.norm(), 5.0);
     }
 
@@ -49,9 +89,14 @@ mod vector3_tests {
         let v1 = Vector3::new(1.0, 2.0, 3.0);
         let v2 = Vector3::new(4.0, 5.0, 6.0);
         assert_eq!(v1.dot(&v2), 32.0);
+
+        let u1 = Vector3::new(1.0, 0.0, 0.0);
+        let u2 = Vector3::new(0.0, 1.0, 0.0);
+        assert_eq!(u1.dot(&u2), 0.0);
+
+        assert_eq!(v1.dot(&v1), v1.norm().pow(2));
     }
 
-    // Issue #2: add, sub, scale, norm, dot
 }
 
 // -- Matrix3x3 ----------------------------------------------------------------
