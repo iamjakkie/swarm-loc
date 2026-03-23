@@ -1,3 +1,5 @@
+use num_traits::Float;
+
 /// 3-dimensional vector (f64 components).
 #[derive(Debug, Clone, Copy)]
 pub struct Vector3 {
@@ -15,32 +17,48 @@ impl Vector3 {
     /// let v = Vector3::new(1.0, 2.0, 3.0);
     /// ```
     pub fn new(x: f64, y: f64, z: f64) -> Self {
-
+        Self {
+            x,
+            y,
+            z,
+        }
     }
 
     /// Returns `self + other`.
     pub fn add(&self, other: &Vector3) -> Self {
-        todo!()
+        Self {
+            x: self.x + other.x,
+            y: self.y + other.y,
+            z: self.z + other.z,
+        }
     }
 
     /// Returns `self - other`.
     pub fn sub(&self, other: &Vector3) -> Self {
-        todo!()
+        Self {
+            x: self.x - other.x,
+            y: self.y - other.y,
+            z: self.z - other.z
+        }
     }
 
     /// Returns each component multiplied by `s`.
     pub fn scale(&self, s: f64) -> Self {
-        todo!()
+        Self {
+            x: self.x * s,
+            y: self.y * s,
+            z: self.z * s
+        }
     }
 
     /// Returns the Euclidean norm.
     pub fn norm(&self) -> f64 {
-        todo!()
+        (self.x * self.x + self.y * self.y + self.z * self.z).sqrt()
     }
 
     /// Returns the dot product of `self` and `other`.
     pub fn dot(&self, other: &Vector3) -> f64 {
-        todo!()
+        self.x * other.x + self.y * other.y + self.z * other.z
     }
 }
 

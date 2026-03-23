@@ -1,7 +1,7 @@
 #[cfg(feature = "std")]
 mod integration {
     use swarm_loc::ekf::Localizer;
-    use swarm_loc::sim::{metrics, ImuSimulator, RangeSimulator, TrajectoryGenerator, VioSimulator};
+    use swarm_loc::sim::{metrics, hover_trajectory, square_trajectory, simulate_imu, simulate_vio, simulate_ranges};
 
     // Issue #21: hover — ATE < 0.5m
 
