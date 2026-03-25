@@ -122,24 +122,51 @@ pub struct Quaternion {
 }
 
 impl Quaternion {
-    /// Returns the identity quaternion `[1, 0, 0, 0]`.
+    
+    pub fn new(w:f64, x:f64, y:f64, z:f64) -> Self {
+        Self {
+            w, x, y, z
+        }
+    }
+
     pub fn identity() -> Self {
-        todo!()
+        Self {
+            w: 1.0, 
+            x: 0.0, 
+            y: 0.0, 
+            z: 0.0
+        }
     }
 
     /// Returns a unit-length copy of `self`.
     pub fn normalize(&self) -> Self {
-        todo!()
+        let d = (self.w * self.w + self.x * self.x + self.y * self.y + self.z * self.z).sqrt();
+        Self {
+            w: self.w / d,
+            x: self.x / d,
+            y: self.y / d,
+            z: self.z / d
+        }
     }
 
     /// Returns the conjugate `[w, -x, -y, -z]`.
     pub fn conjugate(&self) -> Self {
-        todo!()
+        Self {
+            w: self.w,
+            x: -self.x,
+            y: -self.y,
+            z: -self.z
+        }
     }
 
     /// Returns the Hamilton product `self ⊗ other`.
     pub fn multiply(&self, other: &Quaternion) -> Self {
-        todo!()
+        Self {
+            w: self.w * other.w - self.x * other.x - self.y * other.y - self.z * other.z,
+            x: self.w * other.x + self.x * other.w + self.y * other.z - self.z * other.y,
+            y: self.w * other.y - self.x * other.z + self.y * other.w + self.z * other.x,
+            z: self.w * other.z + self.x * other.y - self.y * other.x + self.z * other.w,
+        }
     }
 
     /// Constructs a quaternion from Euler angles in radians (intrinsic ZYX order).

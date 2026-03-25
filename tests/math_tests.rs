@@ -4,8 +4,6 @@ use swarm_loc::math::{Matrix3x3, Matrix6x6, Quaternion, Vector3};
 
 #[cfg(test)]
 mod vector3_tests {
-    use num_traits::Pow;
-
     use super::*;
 
     #[test]
@@ -81,7 +79,7 @@ mod vector3_tests {
         assert_eq!(unit.norm(), 1.0);
 
         let neg = Vector3::new(-3.0, -4.0, 0.0);
-        assert_eq!(v.norm(), 5.0);
+        assert_eq!(neg.norm(), 5.0);
     }
 
     #[test]
@@ -103,8 +101,7 @@ mod vector3_tests {
 
 #[cfg(test)]
 mod matrix3x3_tests {
-    use numbrs::Matrix;
-    use swarm_loc::math::{Matrix3x3, Vector3};
+    use super::*;
 
     #[test]
     fn test_matrix3x3_from_array() {
@@ -160,13 +157,7 @@ mod matrix3x3_tests {
 
         let ind_m = Matrix3x3::identity();
         assert_eq!(ind_m.transpose().data, ind_m.data);
-
-
     }
-
-
-
-    // Issue #3: identity, mul_vector, transpose
 }
 
 // -- Quaternion basic ---------------------------------------------------------
@@ -175,7 +166,81 @@ mod matrix3x3_tests {
 mod quaternion_basic_tests {
     use super::*;
 
-    // Issue #4: identity, normalize, conjugate, multiply
+    #[test]
+    fn test_quaternion_identity() {
+        let q = Quaternion::identity();
+
+        assert_eq!(q.w, 1.0);
+        assert_eq!(q.x, 0.0);
+        assert_eq!(q.y, 0.0);
+        assert_eq!(q.z, 0.0);
+    }
+
+    #[test]
+    fn test_quaternion_normalize() {
+        let q = Quaternion::new(1.0, 2.0, 3.0, 4.0);
+        let norm = q.normalize();
+
+        assert!((norm.w - 0.18257).abs() < 0.0001);
+        assert!((norm.x - 0.36515).abs() < 0.0001);
+        assert!((norm.y - 0.54772).abs() < 0.0001);
+        assert!((norm.z - 0.7303).abs() < 0.0001);
+
+        let ind = Quaternion::identity();
+        let norm = ind.normalize();
+
+        assert_eq!(norm.w, ind.w);
+        assert_eq!(norm.x, ind.x);
+        assert_eq!(norm.y, ind.y);
+        assert_eq!(norm.z, ind.z);
+    }
+
+    #[test]
+    fn test_quaternion_conjugate() {
+        let q = Quaternion::new(1.0, 2.0, 3.0, 4.0);
+        let conj = q.conjugate();
+
+        assert_eq!(conj.w, q.w);
+        assert_eq!(conj.x, -q.x);
+        assert_eq!(conj.y, -q.y);
+        assert_eq!(conj.z, -q.z);
+
+        let conj = q.conjugate().conjugate();
+
+        assert_eq!(conj.w, q.w);
+        assert_eq!(conj.x, q.x);
+        assert_eq!(conj.y, q.y);
+        assert_eq!(conj.z, q.z);
+    }
+
+    #[test]
+    fn test_quaternion_multiply() {
+        let q1 = Quaternion::new(1.0, 2.0, 3.0, 4.0);
+        let q2 = Quaternion::new(4.0, 3.0, 2.0, 1.0);
+        let res = q1.multiply(&q2);
+
+        let ex_q = Quaternion::new(-12.0, 6.0, 24.0, 12.0);
+        assert_eq!(res.w, ex_q.w);
+        assert_eq!(res.x, ex_q.x);
+        assert_eq!(res.y, ex_q.y);
+        assert_eq!(res.z, ex_q.z);
+
+        let ind = Quaternion::identity();
+        let res = q2.multiply(&ind);
+
+        assert_eq!(res.w, q2.w);
+        assert_eq!(res.x, q2.x);
+        assert_eq!(res.y, q2.y);
+        assert_eq!(res.z, q2.z);
+
+        let res = q2.normalize().multiply(&q2.normalize().conjugate());
+        assert!(res.w - ind.w < 0.0001);
+        assert!(res.x - ind.x < 0.0001);
+        assert!(res.y - ind.y < 0.0001);
+        assert!(res.z - ind.z < 0.0001);
+
+    }
+
 }
 
 // -- Quaternion conversions ---------------------------------------------------
