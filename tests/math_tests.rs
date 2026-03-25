@@ -94,7 +94,7 @@ mod vector3_tests {
         let u2 = Vector3::new(0.0, 1.0, 0.0);
         assert_eq!(u1.dot(&u2), 0.0);
 
-        assert_eq!(v1.dot(&v1), v1.norm().pow(2));
+        assert_eq!(v1.dot(&v1), v1.norm().powi(2));
     }
 
 }
@@ -103,7 +103,68 @@ mod vector3_tests {
 
 #[cfg(test)]
 mod matrix3x3_tests {
-    use super::*;
+    use numbrs::Matrix;
+    use swarm_loc::math::{Matrix3x3, Vector3};
+
+    #[test]
+    fn test_matrix3x3_from_array() {
+        let data = [1.0, 2.0, 3.0,
+                1.0, 2.0, 3.0,
+                1.0, 2.0, 3.0];
+        let m = Matrix3x3::from_array(data);
+
+        assert_eq!(m.data, data);
+    }
+    
+    #[test]
+    fn test_matrix3x3_identity() {
+        let ind = Matrix3x3::identity();
+        let ind_exp = [1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0];
+        assert_eq!(ind.data, ind_exp);
+    }
+
+    #[test]
+    fn test_matrix3x3_mul_vector() {
+        let data = [1.0, 2.0, 3.0,
+                1.0, 2.0, 3.0,
+                1.0, 2.0, 3.0];
+        let m = Matrix3x3::from_array(data);
+        let v = Vector3::new(1.0, 2.0, 3.0);
+        let ex_v = Vector3::new(14.0, 14.0, 14.0);
+        
+        let mul_v = m.mul_vector(&v);
+        assert_eq!(mul_v.x, ex_v.x);
+        assert_eq!(mul_v.y, ex_v.y);
+        assert_eq!(mul_v.z, ex_v.z);
+
+        let ind_m = Matrix3x3::identity();
+        let mul_v = ind_m.mul_vector(&v);
+        assert_eq!(mul_v.x, v.x);
+        assert_eq!(mul_v.y, v.y);
+        assert_eq!(mul_v.z, v.z);
+    }
+
+    #[test]
+    fn test_matrix3x3_transpose() {
+        let data = [5.0, 3.0, 2.0,
+                            5.0, 4.0, 1.0,
+                            2.0, 1.0, 0.0];
+        let m = Matrix3x3::from_array(data);
+        let ex_data = [5.0, 5.0, 2.0,
+                            3.0, 4.0, 1.0,
+                            2.0, 1.0, 0.0];
+        
+        assert_eq!(m.transpose().data, ex_data);
+
+        assert_eq!(m.transpose().transpose().data, m.data);
+
+        let ind_m = Matrix3x3::identity();
+        assert_eq!(ind_m.transpose().data, ind_m.data);
+
+
+    }
+
+
 
     // Issue #3: identity, mul_vector, transpose
 }

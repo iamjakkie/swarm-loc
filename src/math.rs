@@ -71,19 +71,42 @@ pub struct Matrix3x3 {
 }
 
 impl Matrix3x3 {
+    pub fn from_array(data: [f64;9]) -> Self {
+        Self {
+            data
+        }
+    }
+
     /// Returns the 3×3 identity matrix.
     pub fn identity() -> Self {
-        todo!()
+        Self {
+            data: {
+                [1.0, 0.0, 0.0,
+                0.0, 1.0, 0.0,
+                0.0, 0.0, 1.0]
+            }
+        }
     }
 
     /// Returns `self * v`.
     pub fn mul_vector(&self, v: &Vector3) -> Vector3 {
-        todo!()
+        Vector3::new(
+            self.data[0] * v.x + self.data[1] * v.y + self.data[2] * v.z,
+            self.data[3] * v.x + self.data[4] * v.y + self.data[5] * v.z,
+            self.data[6] * v.x + self.data[7] * v.y + self.data[8] * v.z,
+        )
     }
 
     /// Returns the transpose of `self`.
     pub fn transpose(&self) -> Self {
-        todo!()
+        let mut new_data = [0.0;9];
+        for i in 0..self.data.len() {
+            let t_ind = (i % 3) * 3 + (i / 3);
+            new_data[t_ind] = self.data[i];
+        }
+        Self {
+            data: new_data
+        }
     }
 }
 
