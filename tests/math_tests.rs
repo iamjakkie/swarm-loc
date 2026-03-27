@@ -249,6 +249,72 @@ mod quaternion_basic_tests {
 mod quaternion_conversion_tests {
     use super::*;
 
+    fn assert_matrix3x3_approx(a: &Matrix3x3, b: &Matrix3x3, eps: f64) {
+        for i in 0..9 {
+            assert!((a.data[i] - b.data[i]).abs() < eps, 
+                "data[{}]: expected {}, got {}", i, b.data[i], a.data[i]);
+        }
+    }
+
+    #[test]
+    fn test_quaternion_from_euler() {
+        let (roll, pitch, yaw) = (0.2, 1.12, 2.31);
+        let q = Quaternion::from_euler(roll, pitch, yaw);
+        let ex = Quaternion::new(0.389, -0.449, 0.291, 0.750);
+
+        println!("{:?}", q);
+        assert!((q.w - ex.w).abs() < 0.001);
+        assert!((q.x - ex.x).abs() < 0.001);
+        assert!((q.y - ex.y).abs() < 0.001);
+        assert!((q.z - ex.z).abs() < 0.001);
+    }
+
+    #[test]
+    fn test_quaternion_rotation_matrix() {
+        let q = Quaternion::new(0.389, -0.449, 0.291, 0.750);
+        let m = q.to_rotation_matrix();
+
+        let ex = Matrix3x3 { data: [-0.2935191, -0.8447469, -0.4474921, 
+                            0.3219716, -0.5281199,  0.7857631,
+                            -0.9001005,  0.0865567,  0.4269978]};
+        
+        assert_matrix3x3_approx(&m, &ex, 1e-3);
+    }
+
+    #[test]
+    fn test_quaternion_rotate_vector() {
+        let q = Quaternion::new(1.0, 0.0, 1.0, 0.0);
+        let v = Vector3::new(1.0, 1.0, 1.0);
+        let res = q.normalize().rotate_vector(&v);
+
+        let ex = Vector3::new(1.0, 1.0, -1.0);
+        assert!((res.x - ex.x).abs() < 0.001);
+        assert!((res.y - ex.y).abs() < 0.001);
+        assert!((res.z - ex.z).abs() < 0.001);
+    }
+
+    #[test]
+    fn test_quaternion_from_axis_angle() {
+        let angle = 1.5708;
+        let axis = Vector3::new(1.0, 0.0, 0.0);
+        let q = Quaternion::from_axis_angle(&axis, angle);
+
+        let ex = Quaternion::new(0.7071, 0.7071, 0.0, 0.0);
+        assert!((q.w - ex.w).abs() < 0.001);
+        assert!((q.x - ex.x).abs() < 0.001);
+        assert!((q.y - ex.y).abs() < 0.001);
+        assert!((q.z - ex.z).abs() < 0.001);
+
+        let zero = Vector3::new(0.0, 0.0, 0.0);
+        let q = Quaternion::from_axis_angle(&zero, 1.0);
+        assert_eq!(q.w, 1.0);
+        assert_eq!(q.x, 0.0);
+        assert_eq!(q.y, 0.0);
+        assert_eq!(q.z, 0.0);
+    }
+
+
+
     // Issue #5: from_euler, to_rotation_matrix, rotate_vector, from_axis_angle
 }
 

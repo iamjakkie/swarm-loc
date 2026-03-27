@@ -171,23 +171,68 @@ impl Quaternion {
 
     /// Constructs a quaternion from Euler angles in radians (intrinsic ZYX order).
     pub fn from_euler(roll: f64, pitch: f64, yaw: f64) -> Self {
-        todo!()
+        let sr = (roll/2.0).sin();
+        let cr = (roll/2.0).cos();
+        let sp = (pitch/2.0).sin();
+        let cp = (pitch/2.0).cos();
+        let sy = (yaw/2.0).sin();
+        let cy = (yaw/2.0).cos();
+
+        Self {
+            w: cr*cp*cy + sr*sp*sy,
+            x: sr*cp*cy - cr*sp*sy,
+            y: cr*sp*cy + sr*cp*sy,
+            z: cr*cp*sy - sr*sp*cy
+        }
     }
 
     /// Converts `self` to an equivalent 3×3 rotation matrix.
     pub fn to_rotation_matrix(&self) -> Matrix3x3 {
-        todo!()
+        let data = [
+            2.0 * (self.w * self.w + self.x * self.x) - 1.0,
+            2.0 * (self.x * self.y - self.w * self.z),
+            2.0 * (self.x * self.z + self.w * self.y),
+            2.0 * (self.w * self.z + self.x * self.y),
+            2.0 * (self.w * self.w + self.y * self.y) - 1.0,
+            2.0 * (self.y * self.z - self.w * self.x),
+            2.0 * (self.x * self.z - self.w * self.y),
+            2.0 * (self.w * self.x + self.y * self.z),
+            2.0 * (self.w * self.w + self.z * self.z) - 1.0
+        ];
+
+        Matrix3x3 { data }
     }
 
     /// Rotates vector `v` by this quaternion.
     pub fn rotate_vector(&self, v: &Vector3) -> Vector3 {
-        todo!()
+        let q = Quaternion::new(0.0, v.x, v.y, v.z);
+        let rotated = self.multiply(&q).multiply(&self.conjugate());
+
+        Vector3 {
+            x: rotated.x,
+            y: rotated.y,
+            z: rotated.z
+        }
     }
 
     /// Constructs a quaternion for a rotation of `angle` radians around `axis`.
     /// Returns identity if `axis` has near-zero norm.
     pub fn from_axis_angle(axis: &Vector3, angle: f64) -> Self {
-        todo!()
+        let norm = axis.norm();
+        if norm < 1e-10 {
+            Self::identity()
+        }
+        else {
+            let axis_norm = axis.scale(1.0 / norm);
+            let s = (angle/2.0).sin();
+            Self {
+                w: (angle/2.0).cos(),
+                x: axis_norm.x * s,
+                y: axis_norm.y * s,
+                z: axis_norm.z * s
+            }
+        }
+        
     }
 }
 
