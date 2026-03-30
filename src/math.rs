@@ -247,17 +247,37 @@ pub struct Matrix6x6 {
 impl Matrix6x6 {
     /// Returns the all-zeros matrix.
     pub fn zeros() -> Self {
-        todo!()
+        Self {
+            data: [0.0; 36]
+        }
     }
 
     /// Returns the 6×6 identity matrix.
     pub fn identity() -> Self {
-        todo!()
+        Self {
+            data: [
+                    1.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+                    0.0, 1.0, 0.0, 0.0, 0.0, 0.0,
+                    0.0, 0.0, 1.0, 0.0, 0.0, 0.0,
+                    0.0, 0.0, 0.0, 1.0, 0.0, 0.0,
+                    0.0, 0.0, 0.0, 0.0, 1.0, 0.0,
+                    0.0, 0.0, 0.0, 0.0, 0.0, 1.0
+                ]
+        }
     }
 
     /// Constructs a diagonal matrix from `diag`.
     pub fn from_diagonal(diag: &[f64; 6]) -> Self {
-        todo!()
+        Self {
+            data: [
+                    diag[0], 0.0, 0.0, 0.0, 0.0, 0.0,
+                    0.0, diag[1], 0.0, 0.0, 0.0, 0.0,
+                    0.0, 0.0, diag[2], 0.0, 0.0, 0.0,
+                    0.0, 0.0, 0.0, diag[3], 0.0, 0.0,
+                    0.0, 0.0, 0.0, 0.0, diag[4], 0.0,
+                    0.0, 0.0, 0.0, 0.0, 0.0, diag[5]
+                ]
+        }
     }
 
     /// Returns the element at (`row`, `col`).
@@ -265,7 +285,8 @@ impl Matrix6x6 {
     /// # Panics
     /// Panics if `row` or `col` >= 6.
     pub fn get(&self, row: usize, col: usize) -> f64 {
-        todo!()
+        assert!(row < 6 && col < 6);
+        self.data[row * 6 + col]
     }
 
     /// Sets the element at (`row`, `col`) to `val`.
@@ -273,27 +294,52 @@ impl Matrix6x6 {
     /// # Panics
     /// Panics if `row` or `col` >= 6.
     pub fn set(&mut self, row: usize, col: usize, val: f64) {
-        todo!()
+        assert!(row < 6 && col < 6);
+        self.data[row * 6 + col] = val;
     }
 
     /// Returns `self + other`.
     pub fn add(&self, other: &Matrix6x6) -> Self {
-        todo!()
+        let mut data = [0.0; 36];
+        for i in 0..36 {
+            data[i] = self.data[i] + other.data[i];
+        }
+        Self {
+            data
+        }
     }
 
     /// Returns `self - other`.
     pub fn sub(&self, other: &Matrix6x6) -> Self {
-        todo!()
+        let mut data = [0.0; 36];
+        for i in 0..36 {
+            data[i] = self.data[i] - other.data[i];
+        }
+        Self {
+            data
+        }
     }
 
     /// Returns each element multiplied by `s`.
     pub fn scale(&self, s: f64) -> Self {
-        todo!()
+        let mut data = [0.0; 36];
+        for i in 0..36 {
+            data[i] = self.data[i] * s;
+        }
+
+        Self { data }
     }
 
     /// Returns the transpose of `self`.
     pub fn transpose(&self) -> Self {
-        todo!()
+        let mut new_data = [0.0;36];
+        for i in 0..self.data.len() {
+            let t_ind = (i % 6) * 6 + (i / 6);
+            new_data[t_ind] = self.data[i];
+        }
+        Self {
+            data: new_data
+        }
     }
 
     /// Returns `self * other` (matrix multiply).

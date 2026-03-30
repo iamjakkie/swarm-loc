@@ -313,18 +313,293 @@ mod quaternion_conversion_tests {
         assert_eq!(q.z, 0.0);
     }
 
-
-
-    // Issue #5: from_euler, to_rotation_matrix, rotate_vector, from_axis_angle
 }
 
 // -- Matrix6x6 basic ----------------------------------------------------------
 
 #[cfg(test)]
 mod matrix6x6_basic_tests {
+
+    fn make_matrix6x6(seed: u64) -> Matrix6x6 {
+        let mut data = [0.0; 36];
+        let mut s = seed;
+        for i in 0..36 {
+            s = s.wrapping_mul(6364136223846793005).wrapping_add(1442695040888963407);
+            data[i] = (s >> 33) as f64 / 1e9;
+        }
+        Matrix6x6 { data }
+    }
+
     use super::*;
 
-    // Issue #6: zeros, identity, from_diagonal, get/set, add, sub, scale, transpose
+    #[test]
+    fn test_matrix6x6_zeros() {
+        let m = Matrix6x6::zeros();
+
+        let exp = [0.0;36];
+        assert_eq!(m.data, exp);
+    }
+
+    #[test]
+    fn test_matrix6x6_identity() {
+        let m = Matrix6x6::identity();
+
+        let exp = [
+            1.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+            0.0, 1.0, 0.0, 0.0, 0.0, 0.0,
+            0.0, 0.0, 1.0, 0.0, 0.0, 0.0,
+            0.0, 0.0, 0.0, 1.0, 0.0, 0.0,
+            0.0, 0.0, 0.0, 0.0, 1.0, 0.0,
+            0.0, 0.0, 0.0, 0.0, 0.0, 1.0
+        ];
+
+        assert_eq!(m.data, exp);
+    }
+
+    #[test]
+    fn test_matrix6x6_from_diagonal() {
+        let diag = [2.0, 3.0, 1.0, 0.0, 0.0, 5.0];
+        let m = Matrix6x6::from_diagonal(&diag);
+
+        let exp = [
+            2.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+            0.0, 3.0, 0.0, 0.0, 0.0, 0.0,
+            0.0, 0.0, 1.0, 0.0, 0.0, 0.0,
+            0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+            0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+            0.0, 0.0, 0.0, 0.0, 0.0, 5.0
+        ];
+
+        assert_eq!(m.data, exp);
+    }
+
+    #[test]
+    fn test_matrix6x6_get() {
+        let mut m = Matrix6x6::identity();
+        let x = m.get(2, 2);
+
+        assert_eq!(x, 1.0);
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_matrix6x6_get_row_out_of_bounds() {
+        let m = Matrix6x6::identity();
+        m.get(6,0);
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_matrix6x6_get_col_out_of_bounds() {
+        let m = Matrix6x6::identity();
+        m.get(6,0);
+    }
+
+    #[test]
+    fn test_matrix6x6_set_val() {
+        let mut m = Matrix6x6::identity();
+        m.set(0,1, 12.0);
+
+        let exp = [
+            1.0, 12.0, 0.0, 0.0, 0.0, 0.0,
+            0.0, 1.0, 0.0, 0.0, 0.0, 0.0,
+            0.0, 0.0, 1.0, 0.0, 0.0, 0.0,
+            0.0, 0.0, 0.0, 1.0, 0.0, 0.0,
+            0.0, 0.0, 0.0, 0.0, 1.0, 0.0,
+            0.0, 0.0, 0.0, 0.0, 0.0, 1.0
+        ];
+
+        assert_eq!(m.data, exp);
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_matrix6x6_set_row_out_of_bounds() {
+        let mut m = Matrix6x6::identity();
+        m.set(6,0, 1.0);
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_matrix6x6_set_col_out_of_bounds() {
+        let mut m = Matrix6x6::identity();
+        m.set(6,0, 1.0);
+    }
+
+    #[test]
+    fn test_matrix6x6_add() {
+        let mut m1 = Matrix6x6::zeros();
+        m1.set(0, 0, 10.0);
+        m1.set(1, 0, 10.0);
+        m1.set(2, 0, 10.0);
+        m1.set(3, 0, 10.0);
+        m1.set(4, 0, 10.0);
+        m1.set(5, 0, 10.0);
+
+        let mut m2 = Matrix6x6::zeros();
+        m2.set(5, 0, 10.0);
+        m2.set(5, 1, 10.0);
+        m2.set(5, 2, 10.0);
+        m2.set(5, 3, 10.0);
+        m2.set(5, 4, 10.0);
+        m2.set(5, 5, 10.0);
+
+        let m3 = Matrix6x6::identity();
+
+        let res = m1.add(&m2);
+        let ex: Vec<f64> = m1.data.iter()
+            .zip(m2.data.iter())
+            .map(|(a, b)| a + b)
+            .collect();
+
+        assert_eq!(res.data, ex.as_slice());
+
+        let res = m1.add(&m3);
+        let ex: Vec<f64> = m1.data.iter()
+            .zip(m3.data.iter())
+            .map(|(a, b)| a + b)
+            .collect();
+
+        assert_eq!(res.data, ex.as_slice());
+
+        let res = m2.add(&m3);
+        let ex: Vec<f64> = m2.data.iter()
+            .zip(m3.data.iter())
+            .map(|(a, b)| a + b)
+            .collect();
+
+        assert_eq!(res.data, ex.as_slice());
+
+        let zeros = Matrix6x6::zeros();
+
+        let res = m1.add(&zeros);
+
+        assert_eq!(m1.data, res.data);
+    }
+
+    #[test]
+    fn test_matrix6x6_sub() {
+        let mut m1 = Matrix6x6::zeros();
+        m1.set(0, 0, 10.0);
+        m1.set(1, 0, 10.0);
+        m1.set(2, 0, 10.0);
+        m1.set(3, 0, 10.0);
+        m1.set(4, 0, 10.0);
+        m1.set(5, 0, 10.0);
+
+        let mut m2 = Matrix6x6::zeros();
+        m2.set(5, 0, 10.0);
+        m2.set(5, 1, 10.0);
+        m2.set(5, 2, 10.0);
+        m2.set(5, 3, 10.0);
+        m2.set(5, 4, 10.0);
+        m2.set(5, 5, 10.0);
+
+        let m3 = Matrix6x6::identity();
+
+        let res = m1.sub(&m2);
+        let ex: Vec<f64> = m1.data.iter()
+            .zip(m2.data.iter())
+            .map(|(a, b)| a - b)
+            .collect();
+
+        assert_eq!(res.data, ex.as_slice());
+
+        let res = m1.sub(&m3);
+        let ex: Vec<f64> = m1.data.iter()
+            .zip(m3.data.iter())
+            .map(|(a, b)| a - b)
+            .collect();
+
+        assert_eq!(res.data, ex.as_slice());
+
+        let res = m2.sub(&m3);
+        let ex: Vec<f64> = m2.data.iter()
+            .zip(m3.data.iter())
+            .map(|(a, b)| a - b)
+            .collect();
+
+        assert_eq!(res.data, ex.as_slice());
+
+        let zeros = Matrix6x6::zeros();
+
+        let res = m1.sub(&m1);
+
+        assert_eq!(res.data, zeros.data);
+    }
+
+    #[test]
+    fn test_matrix6x6_scale() {
+        let m = make_matrix6x6(81);
+        let s = 2.0;
+
+        let res = m.scale(s);
+        let ex: Vec<f64> = m.data.iter()
+            .map(|a| a * s)
+            .collect();
+        
+        assert_eq!(res.data, ex.as_slice());
+
+        let s = 0.0;
+
+        let res = m.scale(s);
+        let ex = Matrix6x6::zeros();
+
+        assert_eq!(res.data, ex.data);
+
+        let s = -1.0;
+        
+        let res = m.scale(s);
+        let ex: Vec<f64> = m.data.iter()
+            .map(|a| a * s)
+            .collect();
+
+        assert_eq!(res.data, ex.as_slice());
+
+        let s = 1.0;
+
+        let res = m.scale(s);
+
+        assert_eq!(res.data, m.data);
+    }
+
+    #[test]
+    fn test_matrix6x6_transpose() {
+        let m = Matrix6x6 {
+            data: [
+                1.0, 3.0, 5.0, 7.0, 9.0, 11.0,
+                2.0, 1.0, 3.0, 5.0, 7.0, 9.0,
+                3.0, 4.0, 1.0, 3.0, 5.0, 7.0,
+                4.0, 5.0, 6.0, 1.0, 3.0, 5.0,
+                5.0, 6.0, 7.0, 8.0, 1.0, 3.0,
+                6.0, 7.0, 8.0, 9.0, 10.0, 1.0
+            ]
+        };
+
+        let res = m.transpose();
+        let ex = [
+            1.0, 2.0, 3.0, 4.0, 5.0, 6.0,
+            3.0, 1.0, 4.0, 5.0, 6.0, 7.0,
+            5.0, 3.0, 1.0, 6.0, 7.0, 8.0,
+            7.0, 5.0, 3.0, 1.0, 8.0, 9.0,
+            9.0, 7.0, 5.0, 3.0, 1.0, 10.0,
+            11.0, 9.0, 7.0, 5.0, 3.0, 1.0
+        ];
+
+        assert_eq!(res.data, ex);
+
+        let res = m.transpose().transpose();
+
+        assert_eq!(m.data, res.data);
+
+        let i = Matrix6x6::identity();
+
+        let res = i.transpose();
+
+        assert_eq!(res.data, i.data);
+
+    }
+
 }
 
 // -- Matrix6x6 multiplication -------------------------------------------------
