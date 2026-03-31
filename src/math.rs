@@ -344,7 +344,17 @@ impl Matrix6x6 {
 
     /// Returns `self * other` (matrix multiply).
     pub fn mul(&self, other: &Matrix6x6) -> Self {
-        todo!()
+        let mut data = [0.0; 36];
+
+        for i in 0..6 {
+            for j in 0..6 {
+                for k in 0..6 {
+                    data[i * 6 + j] += self.data[i * 6 + k] * other.data[k * 6 + j];
+                }
+            }
+        }
+
+        Self { data }
     }
 
     /// Returns the inverse of `self`, or `None` if the determinant is < 1e-12.

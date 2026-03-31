@@ -1,5 +1,15 @@
 use swarm_loc::math::{Matrix3x3, Matrix6x6, Quaternion, Vector3};
 
+fn make_matrix6x6(seed: u64) -> Matrix6x6 {
+        let mut data = [0.0; 36];
+        let mut s = seed;
+        for i in 0..36 {
+            s = s.wrapping_mul(6364136223846793005).wrapping_add(1442695040888963407);
+            data[i] = (s >> 33) as f64 / 1e9;
+        }
+        Matrix6x6 { data }
+    }
+
 // -- Vector3 ------------------------------------------------------------------
 
 #[cfg(test)]
@@ -320,16 +330,6 @@ mod quaternion_conversion_tests {
 #[cfg(test)]
 mod matrix6x6_basic_tests {
 
-    fn make_matrix6x6(seed: u64) -> Matrix6x6 {
-        let mut data = [0.0; 36];
-        let mut s = seed;
-        for i in 0..36 {
-            s = s.wrapping_mul(6364136223846793005).wrapping_add(1442695040888963407);
-            data[i] = (s >> 33) as f64 / 1e9;
-        }
-        Matrix6x6 { data }
-    }
-
     use super::*;
 
     #[test]
@@ -608,7 +608,72 @@ mod matrix6x6_basic_tests {
 mod matrix6x6_mul_tests {
     use super::*;
 
-    // Issue #7: mul
+    #[test]
+    fn test_matrix6x6_mul() {
+        let A = make_matrix6x6(81);
+        let i = Matrix6x6::identity();
+
+        let res = A.mul(&i);
+
+        assert_eq!(res.data, A.data);
+
+        let res = i.mul(&A);
+
+        assert_eq!(res.data, A.data);
+
+        let zeros = Matrix6x6::zeros();
+
+        let res = A.mul(&zeros);
+
+        assert_eq!(res.data, zeros.data);
+
+        let m1 = Matrix6x6 {
+            data: [
+                1.0, 3.0, 5.0, 7.0, 9.0, 11.0,
+                2.0, 1.0, 3.0, 5.0, 7.0, 9.0,
+                3.0, 4.0, 1.0, 3.0, 5.0, 7.0,
+                4.0, 5.0, 6.0, 1.0, 3.0, 5.0,
+                5.0, 6.0, 7.0, 8.0, 1.0, 3.0,
+                6.0, 7.0, 8.0, 9.0, 10.0, 1.0
+            ]
+        };
+
+        let m2 = Matrix6x6 {
+            data: [
+                1.0, 2.0, 3.0, 4.0, 5.0, 6.0,
+                -3.0, 1.0, 4.0, 5.0, 6.0, 7.0,
+                -5.0, -3.0, 1.0, 6.0, 7.0, 8.0,
+                -7.0, -5.0, -3.0, 1.0, 8.0, 9.0,
+                -9.0, -7.0, -5.0, -3.0, 1.0, 10.0,
+                -11.0, -9.0, -7.0, -5.0, -3.0, 1.0
+            ]
+        };
+
+        let res = m1.mul(&m2);
+
+        let ex = [
+            -284.0, -207.0, -123.0, -26.0, 90.0, 231.0, 
+            -213.0, -159.0, -100.0, -30.0, 57.0, 167.0,
+            -157.0, -106.0, -57.0, -9.0, 54.0, 138.0,
+            -130.0, -76.0, -15.0, 44.0, 88.0, 151.0,
+            -146.0, -79.0, -4.0, 82.0, 166.0, 213.0,
+            -219.0, -129.0, -30.0, 81.0, 207.0, 331.0
+        ];
+
+        for i in 0..36 {
+            assert!((res.data[i] - ex[i]).abs() < 1e-6,
+                "Data[{}]: expected {}, got {}", i, ex[i], res.data[i]);
+        }
+
+        let res1 = A.mul(&m1).mul(&m2); // (A*B)*C
+        let res2 = A.mul(&(m1.mul(&m2))); // A*(B*C)
+
+        for i in 0..36 {
+            assert!((res1.data[i] - res2.data[i]).abs() < 1e-6,
+                "Data[{}]: expected {}, got {}", i, res1.data[i], res2.data[i]);
+        }
+    }
+
 }
 
 // -- Matrix6x6 inverse --------------------------------------------------------
