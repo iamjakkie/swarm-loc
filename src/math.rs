@@ -359,7 +359,66 @@ impl Matrix6x6 {
 
     /// Returns the inverse of `self`, or `None` if the determinant is < 1e-12.
     pub fn inverse(&self) -> Option<Self> {
-        todo!()
+        let identity = Matrix6x6::identity();
+        let mut data_adj = [0.0; 72];
+        for i in 0..6 {
+            for j in 0..12 {
+                let ind = i * 12 + j;
+                if j > 5 {
+                    // assign identity val
+                    data_adj[ind] = identity.data[i * 6 + (j-6)];
+                }
+                else {
+                    // assign self val
+                    data_adj[ind] = self.data[i * 6 + j];
+                }
+            }
+        }
+
+        for col in 0..6 {
+            let mut pivot_row = col;
+            let mut max_val = 0.0;
+            for row in col..6 {
+                let val = data_adj[row * 12 + col].abs();
+                if val > max_val {
+                    pivot_row = row;
+                    max_val = val;
+                }
+            }
+            if max_val < 1e-12 {
+                return None;
+            }
+            if pivot_row != col {
+                for c in 0..12 {
+                    let val = data_adj[col * 12 + c];
+                    data_adj[col * 12 + c] = data_adj[pivot_row * 12 + c];
+                    data_adj[pivot_row * 12 + c] = val;
+                }
+            }
+
+            let pivot = data_adj[col * 12 + col];
+            for c in 0..12 {
+                data_adj[col * 12 + c] /= pivot;
+            }
+
+            for r in 0..6 {
+                if r != col {
+                    let factor = data_adj[r * 12 + col];
+                    for c in 0..12 {
+                        data_adj[r * 12 + c] -= factor * data_adj[col * 12 + c];
+                    }
+                }
+            }
+        }
+
+        let mut data = [0.0; 36];
+        for row in 0..6 {
+            for col in 0..6 {
+                data[row * 6 + col] = data_adj[row * 12 + (col + 6)];
+            }
+        }
+
+        Some(Self { data })
     }
 
     /// Returns `self * v` where `v` is a 6-element column vector.

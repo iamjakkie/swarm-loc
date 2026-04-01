@@ -682,6 +682,111 @@ mod matrix6x6_mul_tests {
 mod matrix6x6_inverse_tests {
     use super::*;
 
+    #[test]
+    fn test_matrix6x6_inverse_identity() {
+        let m = Matrix6x6::identity();
+        let res = m.inverse().unwrap();
+
+        assert_eq!(m.data, res.data);
+    }
+
+    #[test]
+    fn test_matrix6x6_self_inverse() {
+        let m = make_matrix6x6(81);
+
+        let res = m.mul(&m.inverse().unwrap());
+        let ex = Matrix6x6::identity();
+
+        for i in 0..36 {
+            assert!((res.data[i] - ex.data[i]).abs() < 1e-6,
+                "Data[{}]: expected {}, got {}", i, ex.data[i], res.data[i]);
+        }
+    }
+
+    #[test]
+    fn test_matrix6x6_double_inverse() {
+        let m = make_matrix6x6(81);
+
+        let res = m.inverse().unwrap().inverse().unwrap();
+
+        for i in 0..36 {
+            assert!((res.data[i] - m.data[i]).abs() < 1e-6,
+                "Data[{}]: expected {}, got {}", i, m.data[i], res.data[i]);
+        }
+    }
+
+    #[test]
+    fn test_matrix6x6_diagonal_inverse() {
+        let mut m = Matrix6x6::identity();
+        m.set(0, 0, 3.0);
+        m.set(1, 1, -5.0);
+        m.set(2,2, 2.0);
+
+        let res = m.inverse().unwrap();
+
+        let ex: Vec<f64> = m.data.iter().map(|a| if *a != 0.0 { 1.0/a } else { 0.0 }).collect();
+
+        for i in 0..36 {
+            assert!((res.data[i] - ex.as_slice()[i]).abs() < 1e-6,
+                "Data[{}]: expected {}, got {}", i, m.data[i], ex.as_slice()[i]);
+        }
+    }
+
+    #[test]
+    fn test_matrix6x6_singular_inverse() {
+        let mut m = Matrix6x6::zeros();
+
+        let res = m.inverse();
+
+        assert!(res.is_none());
+    }
+
+    #[test]
+    fn test_matrix6x6_near_singular_inverse() {
+        let m = Matrix6x6 {
+            data: [2.0,  1.0,  0.0,  0.0,  0.0,  0.0,
+                1.0,  3.0,  1.0,  0.0,  0.0,  0.0,
+                0.0,  1.0,  4.0,  1.0,  0.0,  0.0,
+                0.0,  0.0,  1.0,  3.0,  1.0,  0.0,
+                0.0,  0.0,  0.0,  1.0,  2.0,  1.0,
+                0.0,  0.0,  0.0,  1.0,  2.0,  1.0 + 1e-13]
+        };
+
+        let res = m.inverse();
+
+        assert!(res.is_none())
+    }
+
+    #[test]
+    fn test_matrix6x6_inverse() {
+        let m = Matrix6x6 {
+            data: [
+                1.0, 3.0, 5.0, 7.0, 9.0, 11.0,
+                2.0, 1.0, 3.0, 5.0, 7.0, 9.0,
+                3.0, 4.0, 1.0, 3.0, 5.0, 7.0,
+                4.0, 5.0, 6.0, 1.0, 3.0, 5.0,
+                5.0, 6.0, 7.0, 8.0, 1.0, 3.0,
+                6.0, 7.0, 8.0, 9.0, 10.0, 1.0
+            ]
+        };
+
+        let res = m.inverse().unwrap();
+
+        let ex = [
+            -0.3735153735, 0.3901653902, 0.04262404262, 0.03552003552, 0.03108003108, 0.02797202797,
+            0.2, -0.4, 0.2, 0.0, 0.0, 0.0,
+            0.05714285714, 0.02857142857, -0.2285714286, 0.1428571429, 0.0, 0.0,
+            0.0253968254, 0.0126984127, 0.009523809524, -0.1587301587, 0.1111111111, 0.0,
+            0.01385281385, 0.006926406926, 0.005194805195, 0.004329004329, -0.1212121212,0.09090909091,
+            0.01684981685, 0.04688644689, 0.03516483516, 0.0293040293, 0.02564102564, -0.07692307692
+        ];
+
+        for i in 0..36 {
+            assert!((res.data[i] - ex.as_slice()[i]).abs() < 1e-6,
+                "Data[{}]: expected {}, got {}", i, m.data[i], ex.as_slice()[i]);
+        }
+    }
+
     // Issue #8: inverse, singular matrix returns None
 }
 
