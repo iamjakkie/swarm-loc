@@ -1,6 +1,8 @@
 use crate::math::{Matrix6x6, Quaternion, Vector3};
 use crate::measurements::{ImuMeasurement, RangeMeasurement, VioMeasurement};
-use crate::state::NodeState;
+use crate::state::{NodeState, Pose3D};
+
+const GRAVITY: Vector3 = Vector3 { x: 0.0, y: 0.0, z: 9.81 };
 
 /// EKF-based localizer for a single node.
 #[derive(Debug, Clone)]
@@ -11,13 +13,33 @@ pub struct Localizer {
 
 impl Localizer {
     /// Creates a new `Localizer` with the given initial state and process noise matrix Q.
-    pub fn new(node_id: u8, initial_state: NodeState, process_noise: Matrix6x6) -> Self {
-        todo!()
+    pub fn new(node_id: u8, initial_pose: Pose3D, initial_covariance: Matrix6x6, timestamp_us: u64, process_noise: Matrix6x6) -> Self {
+        let state = NodeState::new(node_id, initial_pose, initial_covariance, timestamp_us);
+        
+        Self {
+            state,
+            process_noise
+        }
     }
 
     /// IMU prediction step: propagates state and covariance forward by `imu.dt`.
     pub fn predict(&mut self, imu: &ImuMeasurement) {
-        todo!()
+        
+        let a_ned = self.state.pose.orientation.rotate_vector(&imu.accel).sub(&GRAVITY);
+
+        let velocity_new = self.state.pose.velocity.add(&a_ned.scale(imu.dt));
+        let position_new = self.state.pose.position.add(&self.state.pose.velocity.scale(imu.dt)).add(&a_ned.scale(0.5 * imu.dt*imu.dt));
+
+        let omega = imu.gyro;
+        
+        let orientation_new = if omega.norm() < 1e-10 {
+            self.state.pose.orientation
+        } else {
+            let angle = omega.norm() * imu.dt;
+            let axis = omega.scale(1.0/omega.norm());
+            let dq = Quaternion::from_axis_angle(&axis, angle);
+            self.orientation().multiply(&dq).normalize()
+        };
     }
 
     /// VIO update step: fuses a position measurement into the filter.
