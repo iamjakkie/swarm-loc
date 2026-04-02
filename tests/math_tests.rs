@@ -787,7 +787,6 @@ mod matrix6x6_inverse_tests {
         }
     }
 
-    // Issue #8: inverse, singular matrix returns None
 }
 
 // -- Matrix6x6 mul_vector -----------------------------------------------------
@@ -796,5 +795,37 @@ mod matrix6x6_inverse_tests {
 mod matrix6x6_mul_vector_tests {
     use super::*;
 
-    // Issue #9: mul_vector
+    #[test]
+    fn test_matrix6x6_mul_vector_identity() {
+        let m = Matrix6x6::identity();
+        let v = [2.0, -2.0, 3.0, -3.0, 10.0, 0.0];
+
+        let res = m.mul_vector(&v);
+
+        assert_eq!(res, v);
+    }
+
+    #[test]
+    fn test_matrix6x6_mul_vector() {
+        let m = Matrix6x6 {
+            data: [
+                1.0, 3.0, 5.0, 7.0, 9.0, 11.0,
+                2.0, 1.0, 3.0, 5.0, 7.0, 9.0,
+                3.0, 4.0, 1.0, 3.0, 5.0, 7.0,
+                4.0, 5.0, 6.0, 1.0, 3.0, 5.0,
+                5.0, 6.0, 7.0, 8.0, 1.0, 3.0,
+                6.0, 7.0, 8.0, 9.0, 10.0, 1.0
+            ]
+        };
+
+        let v = [2.0, -2.0, 3.0, -3.0, 10.0, 0.0]; 
+
+        let res = m.mul_vector(&v);
+        let ex = [80.0, 66.0, 42.0, 43.0, 5.0, 95.0];
+
+        for i in 0..6 {
+            assert!((ex[i] - res[i]).abs() < 1e-6,
+            "Data[{}], expected: {}, got: {}", i, ex[i], res[i]);
+        }
+    }
 }

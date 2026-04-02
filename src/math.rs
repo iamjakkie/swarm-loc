@@ -423,6 +423,15 @@ impl Matrix6x6 {
 
     /// Returns `self * v` where `v` is a 6-element column vector.
     pub fn mul_vector(&self, v: &[f64; 6]) -> [f64; 6] {
-        todo!()
+        let mut out = [0.0; 6];
+        for row in 0..6 {
+            let mut sum = 0.0;
+            for col in 0..6 {
+                sum += self.data[row * 6 + col] * v[col];
+            }
+            out[row] = sum;
+        }
+
+        out
     }
 }
