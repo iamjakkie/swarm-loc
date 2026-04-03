@@ -40,6 +40,21 @@ impl Localizer {
             let dq = Quaternion::from_axis_angle(&axis, angle);
             self.orientation().multiply(&dq).normalize()
         };
+
+        let mut f = Matrix6x6::identity();
+        f.set(0, 3, imu.dt);
+        f.set(1, 4, imu.dt);
+        f.set(2, 5, imu.dt);
+
+        let f_t = f.transpose();
+
+        let p_new = f.mul(&self.state.covariance).mul(&f_t).add(&self.process_noise.scale(imu.dt));
+
+        self.state.pose.position = position_new;
+        self.state.pose.velocity = velocity_new;
+        self.state.pose.orientation = orientation_new;
+        self.state.covariance = p_new;
+        self.state.timestamp_us = imu.timestamp_us;
     }
 
     /// VIO update step: fuses a position measurement into the filter.
@@ -55,26 +70,26 @@ impl Localizer {
 
     /// Returns a reference to the current full node state.
     pub fn state(&self) -> &NodeState {
-        todo!()
+        &self.state
     }
 
     /// Returns a reference to the current position vector.
     pub fn position(&self) -> &Vector3 {
-        todo!()
+        &self.state.pose.position
     }
 
     /// Returns a reference to the current velocity vector.
     pub fn velocity(&self) -> &Vector3 {
-        todo!()
+        &self.state.pose.velocity
     }
 
     /// Returns a reference to the current orientation quaternion.
     pub fn orientation(&self) -> &Quaternion {
-        todo!()
+        &self.state.pose.orientation
     }
 
     /// Returns a reference to the current 6×6 covariance matrix.
     pub fn covariance(&self) -> &Matrix6x6 {
-        todo!()
+        &self.state.covariance
     }
 }
