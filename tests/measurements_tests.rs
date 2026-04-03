@@ -12,11 +12,13 @@ mod measurements_types {
         let accel = Vector3::new(10.0, 5.0, 2.5);
         let gyro = Vector3::new(110.0, 180.0, 360.0);
         let dt = 100.0;
+        let timestamp_us = 1775128764;
 
         let imu = ImuMeasurement {
             accel,
             gyro,
-            dt
+            dt,
+            timestamp_us
         };
 
         assert_eq!(imu.accel.x, accel.x);
@@ -26,6 +28,7 @@ mod measurements_types {
         assert_eq!(imu.gyro.y, gyro.y);
         assert_eq!(imu.gyro.z, gyro.z);
         assert_eq!(imu.dt, dt);
+        assert_eq!(imu.timestamp_us, timestamp_us);
     }
 
     #[test]

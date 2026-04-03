@@ -9,6 +9,7 @@ pub struct ImuMeasurement {
     pub gyro: Vector3,
     /// Integration timestep (s).
     pub dt: f64,
+    pub timestamp_us: u64,
 }
 
 // ---------------------------------------------------------------------------
