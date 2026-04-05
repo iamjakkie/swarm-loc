@@ -192,6 +192,34 @@ mod predict_tests {
 mod update_vio_tests {
     use super::*;
 
+    #[test]
+    fn test_perfect_measurement() {
+
+        let pose = Pose3D::new(
+            Vector3::new(10.0, 0.0, 0.0),
+            Vector3::new(0.0, 0.0, 0.0),
+            Quaternion::identity(),
+        );
+        let mut loc = Localizer::new(1, pose, Matrix6x6::identity(), 0, Matrix6x6::identity());
+
+        let mut r = Matrix6x6::zeros();
+        r.set(0, 0, 1e-6);
+        r.set(1, 1, 1e-6);
+        r.set(2, 2, 1e-6);
+        r.set(3, 3, 1e-6);
+        r.set(4, 4, 1e-6);
+        r.set(5, 5, 1e-6);
+        let vio = VioMeasurement{
+            position: Vector3::new(0.0, 0.0, 0.0),
+            covariance: r,
+            timestamp_us: 100
+        };
+
+        loc.update_vio(&vio);
+        println!("{:?}", loc);
+        assert!(loc.position().x.abs() < 0.01);
+    }
+
     // Issue #13: perfect measurement, covariance shrinks, large R barely changes state
 }
 

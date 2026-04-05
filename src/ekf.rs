@@ -58,8 +58,71 @@ impl Localizer {
     }
 
     /// VIO update step: fuses a position measurement into the filter.
-    pub fn update_vio(&mut self, meas: &VioMeasurement) {
-        todo!()
+    pub fn update_vio(&mut self, vio: &VioMeasurement) {
+        // innovation: y = z - H * x
+        let z = [vio.position.x, vio.position.y, vio.position.z, 0.0, 0.0, 0.0];
+
+        let mut h = Matrix6x6::zeros();
+        h.set(0,0, 1.0);
+        h.set(1,1, 1.0);
+        h.set(2,2, 1.0);
+
+        let x = [
+            self.state.pose.position.x,
+            self.state.pose.position.y,
+            self.state.pose.position.z,
+            self.state.pose.velocity.x,
+            self.state.pose.velocity.y,
+            self.state.pose.velocity.z,
+        ];
+
+        let hx = h.mul_vector(&x);
+        let y = [
+            z[0] - hx[0],
+            z[1] - hx[1],
+            z[2] - hx[2],
+            z[3] - hx[3],
+            z[4] - hx[4],
+            z[5] - hx[5],
+        ];
+
+        let h_t = h.transpose();
+
+        // Innovation covariance 
+        // S = H * P * Hᵀ + R
+
+        let s = h.mul(&self.state.covariance).mul(&h_t).add(&vio.covariance);
+
+        // Compute Kalman gain
+        // K = P * Hᵀ * S⁻¹
+        let s_inv = match s.inverse() {
+            Some(inv) => inv,
+            None => return,
+        };
+        let k = self.state.covariance.mul(&h_t).mul(&s_inv);
+
+        // Update state
+        // x_new = x + K * y
+        
+        let k_y = k.mul_vector(&y);
+        let x_new = [
+            x[0] + k_y[0],
+            x[1] + k_y[1],
+            x[2] + k_y[2],
+            x[3] + k_y[3],
+            x[4] + k_y[4],
+            x[5] + k_y[5],
+        ];
+
+        self.state.pose.position = Vector3::new(x_new[0], x_new[1], x_new[2]);
+        self.state.pose.velocity = Vector3::new(x_new[3], x_new[4], x_new[5]);
+
+        // Update covariance
+        // P_new = (I - K * H) * P
+
+        let i = Matrix6x6::identity();
+        let p_new = i.sub(&k.mul(&h)).mul(&self.state.covariance);
+        self.state.covariance = p_new;
     }
 
     /// Range update step: fuses a distance measurement to a known anchor.
