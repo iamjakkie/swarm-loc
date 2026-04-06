@@ -216,11 +216,163 @@ mod update_vio_tests {
         };
 
         loc.update_vio(&vio);
-        println!("{:?}", loc);
         assert!(loc.position().x.abs() < 0.01);
     }
 
-    // Issue #13: perfect measurement, covariance shrinks, large R barely changes state
+    #[test]
+    fn test_covariance_shrink() {
+        let pose = Pose3D::new(
+            Vector3::new(10.0, 0.0, 0.0),
+            Vector3::new(0.0, 0.0, 0.0),
+            Quaternion::identity(),
+        );
+        let mut loc = Localizer::new(1, pose, Matrix6x6::identity(), 0, Matrix6x6::identity());
+
+        let mut r = Matrix6x6::zeros();
+        r.set(0, 0, 1e-6);
+        r.set(1, 1, 1e-6);
+        r.set(2, 2, 1e-6);
+        r.set(3, 3, 1e-6);
+        r.set(4, 4, 1e-6);
+        r.set(5, 5, 1e-6);
+        let vio = VioMeasurement{
+            position: Vector3::new(0.0, 0.0, 0.0),
+            covariance: r,
+            timestamp_us: 100
+        };
+
+        let p_before = loc.covariance().data;
+
+        loc.update_vio(&vio);
+
+        for i in [0, 7, 14] {
+            assert!(loc.covariance().data[i] < p_before[i]);
+        }
+    }
+
+    #[test]
+    fn test_large_r() {
+        let pose = Pose3D::new(
+            Vector3::new(10.0, 0.0, 0.0),
+            Vector3::new(0.0, 0.0, 0.0),
+            Quaternion::identity(),
+        );
+        let mut loc = Localizer::new(1, pose, Matrix6x6::identity(), 0, Matrix6x6::identity());
+
+        let mut r = Matrix6x6::zeros();
+        r.set(0, 0, 1e6);
+        r.set(1, 1, 1e6);
+        r.set(2, 2, 1e6);
+        r.set(3, 3, 1e6);
+        r.set(4, 4, 1e6);
+        r.set(5, 5, 1e6);
+        let vio = VioMeasurement{
+            position: Vector3::new(0.0, 0.0, 0.0),
+            covariance: r,
+            timestamp_us: 100
+        };
+
+        loc.update_vio(&vio);
+
+        assert!(loc.position().x > 9.9);
+    }
+
+    #[test]
+    fn test_symmetric_covariance() {
+        let pose = Pose3D::new(
+            Vector3::new(10.0, 0.0, 0.0),
+            Vector3::new(0.0, 0.0, 0.0),
+            Quaternion::identity(),
+        );
+        let mut loc = Localizer::new(1, pose, Matrix6x6::identity(), 0, Matrix6x6::identity());
+
+        let mut r = Matrix6x6::zeros();
+        r.set(0, 0, 1e6);
+        r.set(1, 1, 1e6);
+        r.set(2, 2, 1e6);
+        r.set(3, 3, 1e6);
+        r.set(4, 4, 1e6);
+        r.set(5, 5, 1e6);
+        let vio = VioMeasurement{
+            position: Vector3::new(0.0, 0.0, 0.0),
+            covariance: r,
+            timestamp_us: 100
+        };
+
+        loc.update_vio(&vio);
+
+        for i in 0..6 {
+            for j in 0..6 {
+                let a = loc.covariance().data[i * 6 + j];
+                let b = loc.covariance().data[j * 6 + i];
+                assert!((a-b).abs() < 1e-10, "P[{},{}]={} != P[{},{}]={}", i, j, a, j, i, b);
+            }
+        }
+    }
+
+    #[test]
+    fn test_positive_semi_definite_covariance() {
+        let pose = Pose3D::new(
+            Vector3::new(10.0, 0.0, 0.0),
+            Vector3::new(0.0, 0.0, 0.0),
+            Quaternion::identity(),
+        );
+        let mut loc = Localizer::new(1, pose, Matrix6x6::identity(), 0, Matrix6x6::identity());
+
+        let mut r = Matrix6x6::zeros();
+        r.set(0, 0, 1e6);
+        r.set(1, 1, 1e6);
+        r.set(2, 2, 1e6);
+        r.set(3, 3, 1e6);
+        r.set(4, 4, 1e6);
+        r.set(5, 5, 1e6);
+        let vio = VioMeasurement{
+            position: Vector3::new(0.0, 0.0, 0.0),
+            covariance: r,
+            timestamp_us: 100
+        };
+
+        loc.update_vio(&vio);
+
+        for i in [0, 7, 14, 21, 28, 35] {
+            assert!(loc.covariance().data[i] >= 0.0, "diagonal[{}] is negative: {}", i, loc.covariance().data[i]);
+        }
+    }
+
+    #[test]
+    fn test_100_updates() {
+        let pose = Pose3D::new(
+            Vector3::new(10.0, 0.0, 0.0),
+            Vector3::new(0.0, 0.0, 0.0),
+            Quaternion::identity(),
+        );
+        let mut loc = Localizer::new(1, pose, Matrix6x6::identity(), 0, Matrix6x6::identity());
+
+        let mut r = Matrix6x6::zeros();
+        r.set(0, 0, 1e6);
+        r.set(1, 1, 1e6);
+        r.set(2, 2, 1e6);
+        r.set(3, 3, 1e6);
+        r.set(4, 4, 1e6);
+        r.set(5, 5, 1e6);
+        let vio = VioMeasurement{
+            position: Vector3::new(0.0, 0.0, 0.0),
+            covariance: r,
+            timestamp_us: 100
+        };
+
+        for _ in 0..100 {
+            loc.update_vio(&vio);
+        }
+
+        for i in 0..36 {
+            assert!(loc.covariance().data[i].is_finite(), "covariance[{}] is not finite", i);
+        }
+        for i in [0, 7, 14, 21, 28, 35] {
+            assert!(loc.covariance().data[i] >= 0.0, "diagonal[{}] is negative", i);
+        }
+    }
+
 }
 
 // -- Localizer::update_range --------------------------------------------------
