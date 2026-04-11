@@ -483,5 +483,31 @@ mod update_range_tests {
 mod accessor_tests {
     use super::*;
 
-    // Issue #15: state, position, velocity, orientation, covariance
+    #[test]
+    fn test_accessors() {
+        let pose = Pose3D::new(
+            Vector3::new(1.0, 2.0, 3.0),
+            Vector3::new(4.0, 5.0, 6.0),
+            Quaternion::identity(),
+        );
+        let mut loc = Localizer::new(1, pose, Matrix6x6::identity(), 42, Matrix6x6::identity());
+
+        assert_eq!(loc.position().x, 1.0);
+        assert_eq!(loc.position().y, 2.0);
+        assert_eq!(loc.position().z, 3.0);
+
+        assert_eq!(loc.velocity().x, 4.0);
+        assert_eq!(loc.velocity().y, 5.0);
+        assert_eq!(loc.velocity().z, 6.0);
+
+        assert_eq!(loc.orientation().w, 1.0);
+        assert_eq!(loc.orientation().x, 0.0);
+
+        assert_eq!(loc.covariance().data[0], 1.0);  // identity diagonal
+        assert_eq!(loc.covariance().data[1], 0.0);  // off-diagonal
+
+        assert_eq!(loc.state().timestamp_us, 42);
+        assert_eq!(loc.state().node_id, 1);
+    }
+
 }
