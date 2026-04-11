@@ -2,6 +2,8 @@ use crate::math::{Matrix6x6, Quaternion, Vector3};
 use crate::measurements::{ImuMeasurement, RangeMeasurement, VioMeasurement};
 use crate::state::{NodeState, Pose3D};
 
+use num_traits::Float;
+
 const GRAVITY: Vector3 = Vector3 { x: 0.0, y: 0.0, z: 9.81 };
 
 /// EKF-based localizer for a single node.
@@ -128,7 +130,77 @@ impl Localizer {
     /// Range update step: fuses a distance measurement to a known anchor.
     /// Skips the update if the expected range to `anchor_position` is < 1e-6.
     pub fn update_range(&mut self, meas: &RangeMeasurement, anchor_position: &Vector3) {
-        todo!()
+        let dx = self.state.pose.position.x - anchor_position.x;
+        let dy = self.state.pose.position.y - anchor_position.y;
+        let dz = self.state.pose.position.z - anchor_position.z;
+
+        let d_expected = (dx*dx + dy*dy + dz*dz).sqrt();
+
+        if d_expected < 1e-6 {
+            return;
+        }
+        // Calculate innovation
+        let y = meas.distance - d_expected;
+
+        // Jacobian H
+        let h = [dx/d_expected, dy/d_expected, dz/d_expected, 0.0, 0.0, 0.0];
+
+        // innovation covariance
+
+        let mut s = 0.0;
+
+        for i in 0..6 {
+            for j in 0..6 {
+                s += h[i] * &self.state.covariance.data[i * 6 + j] * h[j];
+            }
+        }
+
+        s += meas.sigma * meas.sigma;
+
+        // Kalman gain
+
+        let mut k = self.state.covariance.mul_vector(&h);
+        for i in 0..6 {
+            k[i] /= s;
+        }
+
+        // Update state
+
+        let x = [
+            self.state.pose.position.x,
+            self.state.pose.position.y,
+            self.state.pose.position.z,
+            self.state.pose.velocity.x,
+            self.state.pose.velocity.y,
+            self.state.pose.velocity.z,
+        ];
+
+        let x_new = [
+            x[0] + k[0] * y,
+            x[1] + k[1] * y,
+            x[2] + k[2] * y,
+            x[3] + k[3] * y,
+            x[4] + k[4] * y,
+            x[5] + k[5] * y,
+        ];
+
+        self.state.pose.position = Vector3::new(x_new[0], x_new[1], x_new[2]);
+        self.state.pose.velocity = Vector3::new(x_new[3], x_new[4], x_new[5]);
+
+
+        // Update covariance
+
+        let i = Matrix6x6::identity();
+        let mut data = [0.0; 36];
+        for i in 0..6 {
+            for j in 0..6 {
+                data[i * 6 + j] = k[i] * h[j];
+            }
+        }
+        let k_h = Matrix6x6{ data: data};
+        let p_new = i.sub(&k_h).mul(&self.state.covariance);
+        self.state.covariance = p_new;
+
     }
 
     /// Returns a reference to the current full node state.

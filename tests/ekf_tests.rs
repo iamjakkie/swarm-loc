@@ -381,6 +381,99 @@ mod update_vio_tests {
 mod update_range_tests {
     use super::*;
 
+    #[test]
+    fn test_correction_toward_anchor() {
+        let pose = Pose3D::new(
+            Vector3::new(10.0, 0.0, 0.0),
+            Vector3::new(0.0, 0.0, 0.0),
+            Quaternion::identity(),
+        );
+        let mut loc = Localizer::new(1, pose, Matrix6x6::identity(), 0, Matrix6x6::identity());
+
+        let measurement = RangeMeasurement{
+            neighbor_id: 0,
+            distance: 8.0,
+            sigma: 0.1,
+            timestamp_us: 100,
+        };
+
+        let anchor = Vector3::new(0.0, 0.0, 0.0);
+
+        loc.update_range(&measurement, &anchor);
+
+        assert!(loc.position().x < 10.0);
+    }
+
+    #[test]
+    fn test_large_sigma() {
+        let pose = Pose3D::new(
+            Vector3::new(10.0, 0.0, 0.0),
+            Vector3::new(0.0, 0.0, 0.0),
+            Quaternion::identity(),
+        );
+        let mut loc = Localizer::new(1, pose, Matrix6x6::identity(), 0, Matrix6x6::identity());
+
+        let measurement = RangeMeasurement{
+            neighbor_id: 0,
+            distance: 8.0,
+            sigma: 1e6,
+            timestamp_us: 100,
+        };
+
+        let anchor = Vector3::new(0.0, 0.0, 0.0);
+
+        loc.update_range(&measurement, &anchor);
+
+        assert!(loc.position().x > 9.9);
+    }
+
+    #[test]
+    fn test_zero_distance() {
+        let pose = Pose3D::new(
+            Vector3::new(0.0, 0.0, 0.0),
+            Vector3::new(0.0, 0.0, 0.0),
+            Quaternion::identity(),
+        );
+        let mut loc = Localizer::new(1, pose, Matrix6x6::identity(), 0, Matrix6x6::identity());
+
+        let anchor = Vector3::new(0.0, 0.0, 0.0);
+        let meas = RangeMeasurement {
+            neighbor_id: 0,
+            distance: 0.0,
+            sigma: 0.1,
+            timestamp_us: 100,
+        };
+
+        loc.update_range(&meas, &anchor);
+
+        assert_eq!(loc.position().x, 0.0);
+    }
+
+    #[test]
+    fn test_covariance_shrink() {
+        let pose = Pose3D::new(
+            Vector3::new(10.0, 0.0, 0.0),
+            Vector3::new(0.0, 0.0, 0.0),
+            Quaternion::identity(),
+        );
+        let mut loc = Localizer::new(1, pose, Matrix6x6::identity(), 0, Matrix6x6::identity());
+
+        let measurement = RangeMeasurement{
+            neighbor_id: 0,
+            distance: 10.0,
+            sigma: 0.1,
+            timestamp_us: 100,
+        };
+
+        let anchor = Vector3::new(0.0, 0.0, 0.0);
+
+        let p_before = loc.covariance().data;
+
+        loc.update_range(&measurement, &anchor);
+
+        assert!(loc.covariance().data[0] < p_before[0]);
+    }
+
     // Issue #14: corrects toward anchor, large sigma, zero-distance edge case
 }
 
