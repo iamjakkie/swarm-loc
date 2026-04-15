@@ -2,7 +2,7 @@ extern crate std;
 
 use std::vec::Vec;
 
-use crate::math::Vector3;
+use crate::math::{Quaternion, Vector3};
 use crate::measurements::{ImuMeasurement, RangeMeasurement, VioMeasurement};
 use crate::state::Pose3D;
 
@@ -12,7 +12,18 @@ use crate::state::Pose3D;
 
 /// Generates a stationary hover trajectory at `position` for `duration_s` seconds.
 pub fn hover_trajectory(position: Vector3, duration_s: f64, dt: f64) -> Vec<(f64, Pose3D)> {
-    todo!()
+    let n_steps = (duration_s / dt).round() as usize;
+    let mut traj: Vec<(f64, Pose3D)> = Vec::with_capacity(n_steps);
+    let pose = Pose3D {
+        position,
+        velocity: Vector3 {x: 0.0, y: 0.0, z: 0.0},
+        orientation: Quaternion::identity()
+    };
+    for i in 0..n_steps {
+        traj.push((i as f64 * dt, pose.clone()));
+    }
+
+    traj
 }
 
 /// Generates a square trajectory (4 equal sides of `side_length` metres, at constant
@@ -23,7 +34,35 @@ pub fn square_trajectory(
     altitude: f64,
     dt: f64,
 ) -> Vec<(f64, Pose3D)> {
-    todo!()
+    let steps = (side_length / speed / dt).round() as usize;
+    let mut position = Vector3 { x: 0.0, y: 0.0, z: altitude};
+    let mut traj: Vec<(f64, Pose3D)> = Vec::with_capacity(steps);
+
+    for i in 0..4 {
+        for step in 0..steps {
+            let global_step = i * steps + step;
+            let t = global_step as f64 * dt;
+            match i {
+                0 => {
+                    position.x = step as f64 * speed * dt;
+                    let velocity = Vector3::new(speed, 0.0, 0.0);
+                    let pose = Pose3D::new(position, velocity, Quaternion::identity());
+                    traj.push((t, pose));
+                },
+                1 => {
+
+                },
+                2 => {
+
+                },
+                3 => {
+
+                }
+            }
+        }
+    }
+
+    traj
 }
 
 // ---------------------------------------------------------------------------
