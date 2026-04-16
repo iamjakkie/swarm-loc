@@ -50,14 +50,24 @@ pub fn square_trajectory(
                     traj.push((t, pose));
                 },
                 1 => {
-
+                    position.y = step as f64 * speed * dt;
+                    let velocity = Vector3::new(0.0, speed, 0.0);
+                    let pose = Pose3D::new(position, velocity, Quaternion::identity());
+                    traj.push((t, pose));
                 },
                 2 => {
-
+                    position.x -= speed * dt;
+                    let velocity = Vector3::new(-speed, 0.0, 0.0);
+                    let pose = Pose3D::new(position, velocity, Quaternion::identity());
+                    traj.push((t, pose));
                 },
                 3 => {
-
-                }
+                    position.y -= speed * dt;
+                    let velocity = Vector3::new(0.0, -speed, 0.0);
+                    let pose = Pose3D::new(position, velocity, Quaternion::identity());
+                    traj.push((t, pose));
+                },
+                _ => unreachable!()
             }
         }
     }
