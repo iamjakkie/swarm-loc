@@ -2,9 +2,14 @@ extern crate std;
 
 use std::vec::Vec;
 
+use num_traits::Float;
+use rand::{Rng, RngExt, SeedableRng};
+use rand::rngs::SmallRng;
+
 use crate::math::{Quaternion, Vector3};
 use crate::measurements::{ImuMeasurement, RangeMeasurement, VioMeasurement};
 use crate::state::Pose3D;
+
 
 // ---------------------------------------------------------------------------
 // Trajectory generators
@@ -88,7 +93,38 @@ pub fn simulate_imu(
     gyro_noise_sigma: f64,
     seed: u64,
 ) -> Vec<(f64, ImuMeasurement)> {
-    
+    let mut rng = SmallRng::seed_from_u64(seed);
+    let z = Float::sqrt(-2.0 * Float::ln(u1)) * Float::cos(2.0 * std::f64::consts::PI * u2);
+    let noise_accel = z * accel_noise_sigma;
+    let noise_gyro = z * gyro_noise_sigma;
+
+    let measurements = Vec::with_capacity(true_poses.len());
+    for i in 0..true_poses.len() - 1 {
+        let (t, pose) = &true_poses[i];
+        let (_, next_pose) = &true_poses[i + 1];
+
+        let rand = rng.random();
+        let noise_accel_x = Float::sqrt(-2.0 * Float::ln(rand) & Float::cos(2.0 * std::f64::consts::PI * rand));
+        let rand = rng.random();
+        let noise_accel_y = Float::sqrt(-2.0 * Float::ln(rand) & Float::cos(2.0 * std::f64::consts::PI * rand));
+        let rand = rng.random();
+        let noise_accel_z = Float::sqrt(-2.0 * Float::ln(rand) & Float::cos(2.0 * std::f64::consts::PI * rand));
+        
+        let accel = Vector3 {
+            x: next_pose.position.x - pose.position.x
+        }
+
+        let imu = ImuMeasurement {
+            accel: Vector3 {
+                accel_x, accel_y, accel_z
+            },
+            gyro: Vector3 {
+                gyro_x, gyro_y, gyro_z
+            }
+        }
+    }
+
+    measurements
 }
 
 /// Simulates VIO position fixes from a ground-truth trajectory.
