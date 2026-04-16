@@ -88,7 +88,7 @@ pub fn simulate_imu(
     gyro_noise_sigma: f64,
     seed: u64,
 ) -> Vec<(f64, ImuMeasurement)> {
-    todo!()
+    
 }
 
 /// Simulates VIO position fixes from a ground-truth trajectory.

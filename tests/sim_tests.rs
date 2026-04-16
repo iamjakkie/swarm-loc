@@ -68,4 +68,32 @@ mod sim_types {
         assert!((traj.last().unwrap().1.position.y).abs() < 0.1);
     }
 
+    #[test]
+    fn test_imu_len() {
+        let traj = hover_trajectory(Vector3::new(0.0, 0.0, 0.0), 1.0, 0.005);
+        let imu = simulate_imu(&traj, 0.0, 0.0, 81);
+
+        assert_eq!(imu.len(), traj.len());
+    }
+
+    #[test]
+    fn test_imu_zero_noise() {
+        let traj = hover_trajectory(Vector3::new(0.0, 0.0, 0.0), 1.0, 0.005);
+        let imu = simulate_imu(&traj, 0.0, 0.0, 81);
+
+        assert!((imu[0].1.accel.z - 9.81).abs() < 1e-6);
+        assert!(imu[0].1.accel.x.abs() < 1e-6);
+        assert!(imu[0].1.accel.y.abs() < 1e-6);
+    }
+
+    #[test]
+    fn test_imu_deterministic() {
+        let traj = hover_trajectory(Vector3::new(0.0, 0.0, 0.0), 1.0, 0.005);
+        let imu1 = simulate_imu(&traj, 0.1, 0.01, 81);
+        let imu2 = simulate_imu(&traj, 0.1, 0.01, 81);
+
+        assert_eq!(imu1[0].1.accel.x, imu2[0].1.accel.x);
+        assert_eq!(imu1[99].1.accel.z, imu2[99].1.accel.z);
+    }
+
 }
