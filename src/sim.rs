@@ -94,34 +94,58 @@ pub fn simulate_imu(
     seed: u64,
 ) -> Vec<(f64, ImuMeasurement)> {
     let mut rng = SmallRng::seed_from_u64(seed);
-    let z = Float::sqrt(-2.0 * Float::ln(u1)) * Float::cos(2.0 * std::f64::consts::PI * u2);
-    let noise_accel = z * accel_noise_sigma;
-    let noise_gyro = z * gyro_noise_sigma;
 
-    let measurements = Vec::with_capacity(true_poses.len());
+    let mut measurements = Vec::with_capacity(true_poses.len());
     for i in 0..true_poses.len() - 1 {
         let (t, pose) = &true_poses[i];
-        let (_, next_pose) = &true_poses[i + 1];
+        let (t_next, next_pose) = &true_poses[i + 1];
 
-        let rand = rng.random();
-        let noise_accel_x = Float::sqrt(-2.0 * Float::ln(rand) & Float::cos(2.0 * std::f64::consts::PI * rand));
-        let rand = rng.random();
-        let noise_accel_y = Float::sqrt(-2.0 * Float::ln(rand) & Float::cos(2.0 * std::f64::consts::PI * rand));
-        let rand = rng.random();
-        let noise_accel_z = Float::sqrt(-2.0 * Float::ln(rand) & Float::cos(2.0 * std::f64::consts::PI * rand));
+        let dt = t_next - t;
+
+        let u1: f64 = rng.random();
+        let u2: f64 = rng.random();
+        let noise_accel_x = (Float::sqrt(-2.0 * Float::ln(u1)) * Float::cos(2.0 * std::f64::consts::PI * u2)) * accel_noise_sigma;
+        let u1: f64 = rng.random();
+        let u2: f64 = rng.random();
+        let noise_accel_y = (Float::sqrt(-2.0 * Float::ln(u1)) * Float::cos(2.0 * std::f64::consts::PI * u2)) * accel_noise_sigma;
+        let u1: f64 = rng.random();
+        let u2: f64 = rng.random();
+        let noise_accel_z = (Float::sqrt(-2.0 * Float::ln(u1)) * Float::cos(2.0 * std::f64::consts::PI * u2)) * accel_noise_sigma;
         
         let accel = Vector3 {
-            x: next_pose.position.x - pose.position.x
-        }
+            x: (next_pose.velocity.x - pose.velocity.x) / dt + noise_accel_x,
+            y: (next_pose.velocity.y - pose.velocity.y) / dt + noise_accel_y,
+            z: (next_pose.velocity.z - pose.velocity.z) / dt + 9.81 + noise_accel_z,
+        };
+
+        let u1: f64 = rng.random();
+        let u2: f64 = rng.random();
+        let noise_gyro_x = (Float::sqrt(-2.0 * Float::ln(u1)) * Float::cos(2.0 * std::f64::consts::PI * u2)) * gyro_noise_sigma;
+        let u1: f64 = rng.random();
+        let u2: f64 = rng.random();
+        let noise_gyro_y = (Float::sqrt(-2.0 * Float::ln(u1)) * Float::cos(2.0 * std::f64::consts::PI * u2)) * gyro_noise_sigma;
+        let u1: f64 = rng.random();
+        let u2: f64 = rng.random();
+        let noise_gyro_z = (Float::sqrt(-2.0 * Float::ln(u1)) * Float::cos(2.0 * std::f64::consts::PI * u2)) * gyro_noise_sigma;
+
+        let gyro = Vector3 {
+            x: (next_pose.orientation.x - pose.orientation.x) / dt + noise_gyro_x,
+            y: (next_pose.orientation.y - pose.orientation.y) / dt + noise_gyro_y,
+            z: (next_pose.orientation.z - pose.orientation.z) / dt + noise_gyro_z,
+        };
 
         let imu = ImuMeasurement {
-            accel: Vector3 {
-                accel_x, accel_y, accel_z
-            },
-            gyro: Vector3 {
-                gyro_x, gyro_y, gyro_z
-            }
-        }
+            accel,
+            gyro,
+            dt,
+            timestamp_us: (*t * 1_000_000.0) as u64
+        };
+
+        measurements.push((*t, imu));
+    }
+
+    if let Some((t, _)) = true_poses.last() {
+        measurements.push((*t, measurements.last().unwrap().1.clone()));
     }
 
     measurements
