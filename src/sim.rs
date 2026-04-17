@@ -6,7 +6,7 @@ use num_traits::Float;
 use rand::{Rng, RngExt, SeedableRng};
 use rand::rngs::SmallRng;
 
-use crate::math::{Quaternion, Vector3};
+use crate::math::{Matrix6x6, Quaternion, Vector3};
 use crate::measurements::{ImuMeasurement, RangeMeasurement, VioMeasurement};
 use crate::state::Pose3D;
 
@@ -160,7 +160,68 @@ pub fn simulate_vio(
     vio_rate_hz: f64,
     seed: u64,
 ) -> Vec<(f64, VioMeasurement)> {
-    todo!()
+    let mut rng = SmallRng::seed_from_u64(seed);
+
+    let duration = true_poses.last().unwrap().0 - true_poses.first().unwrap().0;
+    let samples = (vio_rate_hz * duration) as usize;
+
+    let mut measurements: Vec::<(f64, VioMeasurement)> = Vec::with_capacity(samples);
+
+    let vio_dt = 1.0 /vio_rate_hz;
+    let mut next_vio_t = 0.0;
+
+    let mut bias_x = 0.0;
+    let mut bias_y = 0.0;
+    let mut bias_z = 0.0;
+
+    for (t, pose) in true_poses {
+        if *t >= next_vio_t {
+            next_vio_t += vio_dt;
+
+            let u1: f64 = rng.random();
+            let u2: f64 = rng.random();
+            let noise_x = (Float::sqrt(-2.0 * Float::ln(u1)) * Float::cos(2.0 * std::f64::consts::PI * u2)) * position_noise_sigma;
+            let u1: f64 = rng.random();
+            let u2: f64 = rng.random();
+            let noise_y = (Float::sqrt(-2.0 * Float::ln(u1)) * Float::cos(2.0 * std::f64::consts::PI * u2)) * position_noise_sigma;
+            let u1: f64 = rng.random();
+            let u2: f64 = rng.random();
+            let noise_z = (Float::sqrt(-2.0 * Float::ln(u1)) * Float::cos(2.0 * std::f64::consts::PI * u2)) * position_noise_sigma;
+
+            let u1: f64 = rng.random();
+            let u2: f64 = rng.random();
+            bias_x += (Float::sqrt(-2.0 * Float::ln(u1)) * Float::cos(2.0 * std::f64::consts::PI * u2)) * drift_rate * vio_dt;
+            let u1: f64 = rng.random();
+            let u2: f64 = rng.random();
+            bias_y += (Float::sqrt(-2.0 * Float::ln(u1)) * Float::cos(2.0 * std::f64::consts::PI * u2)) * drift_rate * vio_dt;
+            let u1: f64 = rng.random();
+            let u2: f64 = rng.random();
+            bias_z += (Float::sqrt(-2.0 * Float::ln(u1)) * Float::cos(2.0 * std::f64::consts::PI * u2)) * drift_rate * vio_dt;
+            
+            let position = Vector3 {
+                x: pose.position.x + noise_x + bias_x,
+                y: pose.position.y + noise_y + bias_y,
+                z: pose.position.z + noise_z + bias_z
+            };
+
+            let mut covariance = Matrix6x6::zeros();
+            covariance.set(0, 0, position_noise_sigma * position_noise_sigma);
+            covariance.set(1, 1, position_noise_sigma * position_noise_sigma);
+            covariance.set(2, 2, position_noise_sigma * position_noise_sigma);
+
+            let vio = VioMeasurement {
+                position,
+                covariance,
+                timestamp_us: (*t * 1_000_000.0) as u64,
+            };
+
+            measurements.push((*t, vio));
+        }
+
+        
+    }
+
+    measurements
 }
 
 /// Simulates UWB range measurements from a ground-truth trajectory to fixed anchors.

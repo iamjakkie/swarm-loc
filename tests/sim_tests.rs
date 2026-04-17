@@ -96,4 +96,42 @@ mod sim_types {
         assert_eq!(imu1[99].1.accel.z, imu2[99].1.accel.z);
     }
 
+    #[test]
+    fn test_vio_rate() {
+        let traj = hover_trajectory(Vector3::new(0.0, 0.0, 0.0), 1.0, 0.005);
+        let vio = simulate_vio(&traj, 0.0, 0.0, 10.0, 91);
+
+        assert_eq!(vio.len(), 10);
+    }
+
+    #[test]
+    fn test_vio_clean() {
+        let traj = hover_trajectory(Vector3::new(0.0, 0.0, 0.0), 1.0, 0.005);
+        let vio = simulate_vio(&traj, 0.0, 0.0, 10.0, 91);
+
+        assert!((vio[0].1.position.x - traj[0].1.position.x).abs() < 1e-6);
+
+    }
+
+    #[test]
+    fn test_vio_drift() {
+        let traj = hover_trajectory(Vector3::new(0.0, 0.0, 0.0), 1.0, 0.005);
+        let vio = simulate_vio(&traj, 0.0, 0.1, 10.0, 91);
+
+        let err_early = vio[0].1.position.x.abs();
+        let err_late = vio.last().unwrap().1.position.x.abs();
+
+        assert!(err_late > err_early);
+    }
+
+    #[test]
+    fn test_vio_deterministic() {
+        let traj = hover_trajectory(Vector3::new(0.0, 0.0, 0.0), 1.0, 0.005);
+        let v1 = simulate_vio(&traj, 0.1, 0.0, 10.0, 42);
+        let v2 = simulate_vio(&traj, 0.1, 0.0, 10.0, 42);
+        assert_eq!(v1[0].1.position.x, v2[0].1.position.x);
+    }
+
+
+
 }
