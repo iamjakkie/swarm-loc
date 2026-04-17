@@ -132,6 +132,33 @@ mod sim_types {
         assert_eq!(v1[0].1.position.x, v2[0].1.position.x);
     }
 
+    #[test]
+    fn test_ranges_output_rates() {
+        let traj = hover_trajectory(Vector3::new(0.0, 0.0, 0.0), 1.0, 0.005);
+        let anchors = vec![(0u8, Vector3::new(10.0, 0.0, 0.0))];
 
+        let ranges = simulate_ranges(&traj, &anchors, 0.0, 10.0, 42);
+        assert_eq!(ranges.len(), 10); // 1s * 10Hz * 1 anchor
+
+    }
+
+    #[test]
+    fn test_ranges_zero_noises() {
+        let traj = hover_trajectory(Vector3::new(0.0, 0.0, 0.0), 1.0, 0.005);
+        let anchors = vec![(0u8, Vector3::new(10.0, 0.0, 0.0))];
+        
+        let ranges = simulate_ranges(&traj, &anchors, 0.0, 10.0, 42);
+        assert!((ranges[0].1.distance - 10.0).abs() < 1e-6);
+    }
+
+    #[test]
+    fn test_ranges_deterministic() {
+        let traj = hover_trajectory(Vector3::new(0.0, 0.0, 0.0), 1.0, 0.005);
+        let anchors = vec![(0u8, Vector3::new(10.0, 0.0, 0.0))];
+
+        let r1 = simulate_ranges(&traj, &anchors, 0.1, 10.0, 42);
+        let r2 = simulate_ranges(&traj, &anchors, 0.1, 10.0, 42);
+        assert_eq!(r1[0].1.distance, r2[0].1.distance);
+    }
 
 }

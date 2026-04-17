@@ -167,7 +167,7 @@ pub fn simulate_vio(
 
     let mut measurements: Vec::<(f64, VioMeasurement)> = Vec::with_capacity(samples);
 
-    let vio_dt = 1.0 /vio_rate_hz;
+    let vio_dt = 1.0 / vio_rate_hz;
     let mut next_vio_t = 0.0;
 
     let mut bias_x = 0.0;
@@ -232,7 +232,43 @@ pub fn simulate_ranges(
     range_rate_hz: f64,
     seed: u64,
 ) -> Vec<(f64, RangeMeasurement)> {
-    todo!()
+    let mut rng = SmallRng::seed_from_u64(seed);
+
+    let duration = true_poses.last().unwrap().0 - true_poses.first().unwrap().0;
+    let samples = (range_rate_hz * duration) as usize * anchors.len();
+
+    let mut measurements: Vec::<(f64, RangeMeasurement)> = Vec::with_capacity(samples);
+
+    let range_dt = 1.0 / range_rate_hz;
+    let mut next_range_t = 0.0;
+
+    for (t, pose) in true_poses {
+        if *t >= next_range_t {
+            next_range_t += range_dt;
+
+            for (neighbor_id, position) in anchors {
+                let neighbor_id = *neighbor_id;
+                let u1: f64 = rng.random();
+                let u2: f64 = rng.random();
+                let noise = (Float::sqrt(-2.0 * Float::ln(u1)) * Float::cos(2.0 * std::f64::consts::PI * u2)) * range_noise_sigma;
+
+                let distance = Float::sqrt(Float::powi(pose.position.x - position.x,2) + Float::powi(pose.position.y - position.y,2) + Float::powi(pose.position.z - position.z,2)) + noise;
+
+                let range = RangeMeasurement {
+                    neighbor_id,
+                    distance,
+                    sigma: range_noise_sigma,
+                    timestamp_us: (*t * 1_000_000.0) as u64
+                };
+
+                measurements.push((*t, range));
+            }
+
+            
+        }
+    }
+
+    measurements
 }
 
 // ---------------------------------------------------------------------------
