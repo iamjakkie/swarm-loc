@@ -1,6 +1,7 @@
 #![cfg(feature = "std")]
 use swarm_loc::math::*;
 use swarm_loc::sim::*;
+use swarm_loc::sim::metrics::*;
 
 #[cfg(test)]
 mod sim_types {
@@ -159,6 +160,63 @@ mod sim_types {
         let r1 = simulate_ranges(&traj, &anchors, 0.1, 10.0, 42);
         let r2 = simulate_ranges(&traj, &anchors, 0.1, 10.0, 42);
         assert_eq!(r1[0].1.distance, r2[0].1.distance);
+    }
+
+    #[test]
+    fn test_ate() {
+        let truth = vec![
+            (0.0, Vector3::new(0.0, 0.0, 0.0)),
+            (0.1, Vector3::new(1.0, 0.0, 0.0)),
+            (0.2, Vector3::new(2.0, 0.0, 0.0)),
+        ];
+
+        assert!((ate(&truth, &truth) - 0.0).abs() < 1e-9);
+    }
+
+    #[test]
+    fn test_ate_offset() {
+        let truth = vec![
+            (0.0, Vector3::new(0.0, 0.0, 0.0)),
+            (0.1, Vector3::new(1.0, 0.0, 0.0)),
+            (0.2, Vector3::new(2.0, 0.0, 0.0)),
+        ];
+
+        let offset = vec![
+            (0.0, Vector3::new(1.0, 0.0, 0.0)),
+            (0.1, Vector3::new(2.0, 0.0, 0.0)),
+            (0.2, Vector3::new(3.0, 0.0, 0.0)),
+        ];
+
+        assert!((ate(&offset, &truth) - 1.0).abs() < 1e-9);
+    }
+
+    #[test]
+    fn test_rpe() {
+        let truth = vec![
+            (0.0, Vector3::new(0.0, 0.0, 0.0)),
+            (0.1, Vector3::new(1.0, 0.0, 0.0)),
+            (0.2, Vector3::new(2.0, 0.0, 0.0)),
+        ];
+
+        assert!((rpe(&truth, &truth) - 0.0).abs() < 1e-9);
+    }
+
+    #[test]
+    fn test_nis_zero() {
+        let innovations = vec![(0.0, 1.0), (0.0, 1.0), (0.0, 2.0)];
+        assert!((nis_mean(&innovations) - 0.0).abs() < 1e-9);
+    }
+
+    #[test]
+    fn test_nis_known() {
+        let innovations = vec![(1.0, 1.0), (2.0, 4.0)];
+        assert!((nis_mean(&innovations) - 1.0).abs() < 1e-9);
+    }
+
+    #[test]
+    fn test_nis_empty() {
+        let innovations: Vec<(f64, f64)> = vec![];
+        assert_eq!(nis_mean(&innovations), 0.0);
     }
 
 }

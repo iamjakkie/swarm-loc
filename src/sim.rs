@@ -276,20 +276,51 @@ pub fn simulate_ranges(
 // ---------------------------------------------------------------------------
 
 pub mod metrics {
+    use num_traits::Float;
+
     use crate::math::Vector3;
 
     /// Absolute Trajectory Error: RMS of per-sample position errors.
     pub fn ate(estimated: &[(f64, Vector3)], truth: &[(f64, Vector3)]) -> f64 {
-        todo!()
+        let sample_size = estimated.len();
+        assert!(sample_size == truth.len());
+
+        let mut rmse = 0.0;
+
+        for i in 0..sample_size {
+            rmse += Float::powi(estimated[i].1.x - truth[i].1.x, 2) +
+                Float::powi(estimated[i].1.y - truth[i].1.y, 2) + 
+                Float::powi(estimated[i].1.z - truth[i].1.z, 2)
+        }
+
+        (rmse / sample_size as f64).sqrt()
     }
 
     /// Relative Pose Error: RMS of relative translation errors between consecutive pairs.
     pub fn rpe(estimated: &[(f64, Vector3)], truth: &[(f64, Vector3)]) -> f64 {
-        todo!()
+        let sample_size = estimated.len();
+        assert!(sample_size == truth.len());
+
+        let mut rmse = 0.0;
+
+        for i in 0..sample_size-1 {
+            rmse += Float::powi((estimated[i+1].1.x - estimated[i].1.x) - (truth[i+1].1.x - truth[i].1.x), 2) +
+                Float::powi((estimated[i+1].1.y - estimated[i].1.y) - (truth[i+1].1.y - truth[i].1.y), 2) + 
+                Float::powi((estimated[i+1].1.z - estimated[i].1.z) - (truth[i+1].1.z - truth[i].1.z), 2)
+        }
+
+        (rmse / (sample_size - 1) as f64).sqrt()
     }
 
     /// Mean Normalised Innovation Squared across all update steps.
     pub fn nis_mean(innovations: &[(f64, f64)]) -> f64 {
-        todo!()
+        if innovations.is_empty() { return 0.0 }
+        let mut nis = 0.0;
+
+        for (innovation, covariance) in innovations {
+            nis += innovation * innovation / covariance;
+        }
+
+        nis / innovations.len() as f64
     }
 }
